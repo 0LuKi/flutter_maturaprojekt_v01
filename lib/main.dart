@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
-import 'theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
