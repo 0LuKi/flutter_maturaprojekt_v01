@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,12 +13,33 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary)
-      ),     // TODO Dark Theme
-      home: const HomePage(),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+
+        final ThemeData lightTheme = lightDynamic != null
+            ? ThemeData(
+                colorScheme: lightDynamic.harmonized(), // harmonisiert Farben
+                useMaterial3: true,
+              )
+            : AppTheme.lightTheme;
+
+        final ThemeData darkTheme = darkDynamic != null
+            ? ThemeData(
+                colorScheme: darkDynamic.harmonized(),
+                useMaterial3: true,
+              )
+            : AppTheme.darkTheme;
+
+        return MaterialApp(
+          title: 'Flutter Demo',
+
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.system,
+
+          home: const HomePage(),
+        );
+      }
     );
   }
 }
@@ -28,100 +51,144 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+// Navigation Bar list
+List<IconData> navIcons = [
+  Icons.pets, 
+  Icons.calendar_today
+];
+
+List<String> navTitle = [
+  "Livestock",
+  "Appointments"
+];
+
+int selectedIndex = 0;
+
 class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final double topSafeArea = MediaQuery.of(context).padding.top;
+
+
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: SafeArea(
+      backgroundColor: AppColors.onPrimary,
 
-        // AppBar
-        child: Column(
-          children: [
-            AppBar(
-              title: const Text(
-                'Livestock',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                )
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Container(
+                height: topSafeArea + 100,
+                color: AppColors.primary,
               ),
-              foregroundColor: AppColors.onPrimary,
-              backgroundColor: AppColors.primary,
-            ),
-
-            // Liste container
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: AppColors.onPrimary,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30)
-                  )
-                ),
-
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: "Search",
-                          filled: true,
-                          fillColor: AppColors.onPrimaryAccent,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: 15),
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              CowCard(id: "IT412345", name: "Lunte"),
-                              CowCard(id: "IT412345", name: "Lunte"),
-                              CowCard(id: "IT412345", name: "Lunte"),
-                              CowCard(id: "IT412345", name: "Lunte"),
-                              CowCard(id: "IT412345", name: "Lunte"),
-                            ]
-                          ),
-                        ),
-                      )
-
-                    ]
-                  )
+              Expanded(
+                child: Container(
+                  color: AppColors.onPrimary
                 )
               )
-            )
-          ],
-        ),
-      ),
-
-      // Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pets),
-            label: "Livestock",
+            ]
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: "Appointments"  
-          )
-        ]
+
+          SafeArea(
+            // AppBar
+            child: Column(
+              children: [
+                AppBar(
+                  title: const Text(
+                    'Livestock',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    )
+                  ),
+                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor: Colors.transparent,
+                ),
+            
+                // Liste container
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.onPrimary, // Why doesnt it work here
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30)
+                      )
+                    ),
+            
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          TextField(
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.search),
+                              hintText: "Search",
+                              filled: true,
+                              fillColor: AppColors.onPrimaryAccent,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+            
+                          const SizedBox(height: 15),
+
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  CowCard(id: "IT412345", name: "Lunte"),
+                                  CowCard(id: "IT412345", name: "Lunte"),
+                                  CowCard(id: "IT412345", name: "Lunte"),
+                                  CowCard(id: "IT412345", name: "Lunte"),
+                                  CowCard(id: "IT412345", name: "Lunte"),
+                                ]
+                              ),
+                            ),
+                          )
+                        ]
+                      )
+                    )
+                  )
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+
+      // Floating Navigation Bar
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: NavigationBar(
+            backgroundColor: AppColors.onPrimaryAccent,
+            height: 80,
+            elevation: 0,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          
+            destinations: [
+              NavigationDestination(icon: Icon(navIcons[0]), label: navTitle[0]),
+              NavigationDestination(icon: Icon(navIcons[1]), label: navTitle[1]),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
+
 
 class CowCard extends StatelessWidget {
 
@@ -139,13 +206,18 @@ class CowCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: AppColors.onPrimaryAccent,
+          color: AppColors.onPrimaryAccent2,
           width: 2
-        )
+        ),
       ),
       child: ListTile(
-        title: Text(id, style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(name),
+        title: Text(id, style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: AppColors.onPrimaryAccent2
+        )),
+        subtitle: Text(name, style: TextStyle(
+          color: AppColors.onPrimaryAccent2
+        )),
       )
     );
   }
