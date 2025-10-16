@@ -71,9 +71,10 @@ class _HomePageState extends State<HomePage> {
 
     final double topSafeArea = MediaQuery.of(context).padding.top;
 
-
+    // 
     return Scaffold(
-      backgroundColor: AppColors.onPrimary,
+      extendBody: true,
+      backgroundColor: Theme.of(context).colorScheme.primary,
 
       body: Stack(
         children: [
@@ -81,11 +82,12 @@ class _HomePageState extends State<HomePage> {
             children: [
               Container(
                 height: topSafeArea + 100,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary
+                //color: ColorsLight.primary,
               ),
               Expanded(
                 child: Container(
-                  color: AppColors.onPrimary
+                  //color: ColorsLight.onPrimary
                 )
               )
             ]
@@ -103,7 +105,8 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 24,
                     )
                   ),
-                  foregroundColor: AppColors.onPrimary,
+                  foregroundColor: Theme.of(context).colorScheme.surface,
+                  //foregroundColor: ColorsLight.onPrimary,
                   backgroundColor: Colors.transparent,
                 ),
             
@@ -112,13 +115,13 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: AppColors.onPrimary, // Why doesnt it work here
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(30),
                         topRight: Radius.circular(30)
                       )
                     ),
-            
+                              
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -128,16 +131,16 @@ class _HomePageState extends State<HomePage> {
                               prefixIcon: Icon(Icons.search),
                               hintText: "Search",
                               filled: true,
-                              fillColor: AppColors.onPrimaryAccent,
+                              //fillColor: ColorsLight.onPrimaryAccent,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-            
+                              
                           const SizedBox(height: 15),
-
+                  
                           Expanded(
                             child: SingleChildScrollView(
                               child: Column(
@@ -163,26 +166,28 @@ class _HomePageState extends State<HomePage> {
     ),
 
       // Floating Navigation Bar
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
-          child: NavigationBar(
-            backgroundColor: AppColors.onPrimaryAccent,
-            height: 80,
-            elevation: 0,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                selectedIndex = index;
-              });
-            },
-          
-            destinations: [
-              NavigationDestination(icon: Icon(navIcons[0]), label: navTitle[0]),
-              NavigationDestination(icon: Icon(navIcons[1]), label: navTitle[1]),
-            ],
-          ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface,
+            width: 0.05
+          ))
+        ),
+        child: NavigationBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          height: 80,
+          elevation: 0,
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              selectedIndex = index;
+            });
+          },
+        
+          destinations: [
+            NavigationDestination(icon: Icon(navIcons[0]), label: navTitle[0]),
+            NavigationDestination(icon: Icon(navIcons[1]), label: navTitle[1]),
+          ],
         ),
       ),
     );
@@ -202,21 +207,21 @@ class CowCard extends StatelessWidget {
     return Card(
       elevation: 0,
       margin: EdgeInsets.symmetric(vertical: 5),
-      color: AppColors.onPrimary,
+      //color: ColorsLight.onPrimary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: AppColors.onPrimaryAccent2,
+          //color: ColorsLight.onPrimaryAccent2,
           width: 2
         ),
       ),
       child: ListTile(
         title: Text(id, style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: AppColors.onPrimaryAccent2
+          //color: ColorsLight.onPrimaryAccent2
         )),
         subtitle: Text(name, style: TextStyle(
-          color: AppColors.onPrimaryAccent2
+          //color: ColorsLight.onPrimaryAccent2
         )),
       )
     );
