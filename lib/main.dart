@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -50,17 +52,6 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
-
-// Navigation Bar list
-List<IconData> navIcons = [
-  Icons.pets, 
-  Icons.calendar_today
-];
-
-List<String> navTitle = [
-  "Livestock",
-  "Appointments"
-];
 
 int selectedIndex = 0;
 
@@ -131,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                               prefixIcon: Icon(Icons.search),
                               hintText: "Search",
                               filled: true,
-                              //fillColor: ColorsLight.onPrimaryAccent,
+                              fillColor: Theme.of(context).colorScheme.outlineVariant,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
@@ -162,8 +153,8 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-      ],
-    ),
+        ],
+      ),
 
       // Floating Navigation Bar
       bottomNavigationBar: Container(
@@ -185,8 +176,16 @@ class _HomePageState extends State<HomePage> {
           },
         
           destinations: [
-            NavigationDestination(icon: Icon(navIcons[0]), label: navTitle[0]),
-            NavigationDestination(icon: Icon(navIcons[1]), label: navTitle[1]),
+            NavigationDestination(
+              icon: Icon(MdiIcons.cow),
+              selectedIcon: Icon(MdiIcons.cow), 
+              label: "Livestock"
+            ),
+            NavigationDestination(
+              icon: Icon(MdiIcons.calendarOutline), 
+              selectedIcon: Icon(MdiIcons.calendar),
+              label: "Appointments"
+            ),
           ],
         ),
       ),
@@ -204,26 +203,29 @@ class CowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.symmetric(vertical: 5),
-      //color: ColorsLight.onPrimary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          //color: ColorsLight.onPrimaryAccent2,
-          width: 2
+    return Container(
+      height: 100,
+      child: Card(
+        elevation: 0,
+        margin: EdgeInsets.symmetric(vertical: 5),
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(
+            color: Colors.transparent,
+            width: 0
+          ),
         ),
+        child: ListTile(
+          title: Text(id, style: TextStyle(
+            fontWeight: FontWeight.bold,
+            //color: ColorsLight.onPrimaryAccent2
+          )),
+          subtitle: Text(name, style: TextStyle(
+            //color: ColorsLight.onPrimaryAccent2
+          )),
+        )
       ),
-      child: ListTile(
-        title: Text(id, style: TextStyle(
-          fontWeight: FontWeight.bold,
-          //color: ColorsLight.onPrimaryAccent2
-        )),
-        subtitle: Text(name, style: TextStyle(
-          //color: ColorsLight.onPrimaryAccent2
-        )),
-      )
     );
   }
 }
