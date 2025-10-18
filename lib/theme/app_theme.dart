@@ -19,7 +19,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    primaryColor: ColorsLight.primary,
+    primaryColor: ColorsDark.primary,
 
     colorScheme: ColorScheme.dark(
       primary: ColorsDark.primary,

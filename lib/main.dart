@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'theme/app_theme.dart';
@@ -18,27 +17,36 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
 
+        final ThemeData baseLight = AppTheme.lightTheme;
+        final ThemeData baseDark = AppTheme.darkTheme;
+
         final ThemeData lightTheme = lightDynamic != null
-            ? ThemeData(
-                colorScheme: lightDynamic.harmonized(), // harmonisiert Farben
+            ? baseLight.copyWith(
+                colorScheme: lightDynamic.harmonized(),
                 useMaterial3: true,
+                appBarTheme: baseLight.appBarTheme.copyWith(
+                  foregroundColor: lightDynamic.harmonized().onSurface,
+                  backgroundColor: Colors.transparent,
+                ),
               )
-            : AppTheme.lightTheme;
+            : baseLight;
 
         final ThemeData darkTheme = darkDynamic != null
-            ? ThemeData(
+            ? baseDark.copyWith(
                 colorScheme: darkDynamic.harmonized(),
                 useMaterial3: true,
+                appBarTheme: baseDark.appBarTheme.copyWith(
+                  foregroundColor: darkDynamic.harmonized().onSurface,
+                  backgroundColor: Colors.transparent,
+                ),
               )
-            : AppTheme.darkTheme;
+            : baseDark;
 
         return MaterialApp(
           title: 'Flutter Demo',
-
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: ThemeMode.system,
-
           home: const HomePage(),
         );
       }
@@ -64,8 +72,8 @@ class _HomePageState extends State<HomePage> {
 
     // 
     return Scaffold(
-      extendBody: true,
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      //extendBody: true,
+      //backgroundColor: Theme.of(context).colorScheme.primary,
 
       body: Stack(
         children: [
@@ -88,17 +96,28 @@ class _HomePageState extends State<HomePage> {
             // AppBar
             child: Column(
               children: [
-                AppBar(
-                  title: const Text(
-                    'Livestock',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                    )
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: AppBar(
+                    title: const Text(
+                      'Livestock',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30,
+                      )
+                    ),
+                    actions: [
+                      IconButton(
+                        onPressed: () {  },
+                        tooltip: "Menu",
+                        icon: Icon(Icons.menu_rounded, size: 40),
+                        
+                      )
+                    ],
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    //foregroundColor: ColorsLight.onPrimary,
+                    backgroundColor: Colors.transparent,
                   ),
-                  foregroundColor: Theme.of(context).colorScheme.surface,
-                  //foregroundColor: ColorsLight.onPrimary,
-                  backgroundColor: Colors.transparent,
                 ),
             
                 // Liste container
@@ -165,7 +184,7 @@ class _HomePageState extends State<HomePage> {
           ))
         ),
         child: NavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          //backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
           height: 80,
           elevation: 0,
           selectedIndex: selectedIndex,
@@ -182,8 +201,8 @@ class _HomePageState extends State<HomePage> {
               label: "Livestock"
             ),
             NavigationDestination(
-              icon: Icon(MdiIcons.calendarOutline), 
-              selectedIcon: Icon(MdiIcons.calendar),
+              icon: Icon(Symbols.event), 
+              selectedIcon: Icon(Symbols.event_rounded),
               label: "Appointments"
             ),
           ],
