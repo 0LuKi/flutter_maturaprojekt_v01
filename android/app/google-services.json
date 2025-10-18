@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "708583674473",
+    "project_id": "livestockmanager-74f7d",
+    "storage_bucket": "livestockmanager-74f7d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:708583674473:android:4fe01b3e1071f380d808f8",
+        "android_client_info": {
+          "package_name": "com.example.flutter_maturaprojekt_v01"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtq1h5bgBs3ouwyLzhHO6H8SY07qCKMBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

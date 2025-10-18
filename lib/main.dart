@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter_maturaprojekt_v01/content/CowList.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -152,16 +162,14 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 15),
                   
                           Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  CowCard(id: "IT412345", name: "Lunte"),
-                                  CowCard(id: "IT412345", name: "Lunte"),
-                                  CowCard(id: "IT412345", name: "Lunte"),
-                                  CowCard(id: "IT412345", name: "Lunte"),
-                                  CowCard(id: "IT412345", name: "Lunte"),
-                                ]
-                              ),
+                            child: Column(
+                              children: [                    
+                                AddCow(),
+                                const SizedBox(height: 15),
+                                Expanded(                                  
+                                  child: CowList(),
+                                )
+                              ]
                             ),
                           )
                         ]
@@ -207,43 +215,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-
-class CowCard extends StatelessWidget {
-
-  final String id;
-  final String name;
-
-  const CowCard({super.key, required this.id, required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      child: Card(
-        elevation: 0,
-        margin: EdgeInsets.symmetric(vertical: 5),
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: Colors.transparent,
-            width: 0
-          ),
-        ),
-        child: ListTile(
-          title: Text(id, style: TextStyle(
-            fontWeight: FontWeight.bold,
-            //color: ColorsLight.onPrimaryAccent2
-          )),
-          subtitle: Text(name, style: TextStyle(
-            //color: ColorsLight.onPrimaryAccent2
-          )),
-        )
       ),
     );
   }
