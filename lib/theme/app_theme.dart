@@ -2,6 +2,27 @@ import 'package:flutter/material.dart';
 import 'colors.dart';
 
 class AppTheme {
+
+  static TextButtonThemeData textButtonTheme(Color primaryColor) =>
+    TextButtonThemeData(
+      style: TextButton.styleFrom(     
+        
+      )
+    );
+
+  static FilledButtonThemeData filledButtonTheme(Color primaryColor, BuildContext context) =>
+    FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.all(8.0)
+      )
+    );
+
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,

@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           theme: baseLight,
           darkTheme: baseLight,        // danach auf baseDark ändern
           themeMode: ThemeMode.system,
-          home: RegisterPage(),
+          home: LoginPage(),
         );
       }
     );

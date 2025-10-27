@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -30,6 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void initState() {
+    super.initState();
 
     passwordController.addListener(checkPasswordsMatch);
     passwordRepeatController.addListener(checkPasswordsMatch);
@@ -189,28 +189,19 @@ class _RegisterPageState extends State<RegisterPage> {
                       SizedBox(height: 20),
                         
                       Center(
-                        child: MaterialButton(
+                        child: FilledButton(
                           onPressed:() {
                             setState(() {
                               passwordError = passwordController.text != passwordRepeatController.text;
                             });
                           },
-                                  
-                          elevation: 0,
-                          color: colorScheme.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)
-                          ),
-                                  
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "Signup", 
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: colorScheme.onPrimary
-                              )
-                            ),
+
+                          child: Text(
+                            "Signup", 
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: colorScheme.onPrimary
+                            )
                           )
                         ),
                       )
