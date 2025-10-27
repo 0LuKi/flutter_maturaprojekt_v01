@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/rendering.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class CowList extends StatefulWidget {
@@ -9,6 +8,8 @@ class CowList extends StatefulWidget {
   @override
   State<CowList> createState() => _CowListState();
 }
+
+
 
 class _CowListState extends State<CowList> {
   final firestoreRef = FirebaseFirestore.instance.collection('cows');
@@ -39,7 +40,7 @@ class _CowListState extends State<CowList> {
 
         // Wenn keine Kühe
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("Keine Kühe gefunden 🐄"));
+          return const Center(child: Text("Keine Kühe gefunden"));
         }
 
         // Normale Anzeige
@@ -84,6 +85,9 @@ class _AddCowState extends State<AddCow> {
 
   @override
   Widget build(BuildContext context) {
+
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         Expanded(
@@ -92,7 +96,7 @@ class _AddCowState extends State<AddCow> {
             decoration: InputDecoration(
               hintText: 'Cow Name',
               filled: true,
-              fillColor: Theme.of(context).colorScheme.outlineVariant,
+              fillColor: colorScheme.surfaceContainerHigh,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none
@@ -101,14 +105,13 @@ class _AddCowState extends State<AddCow> {
           ),
         ),
         SizedBox(width: 10),
-        ElevatedButton(
+        MaterialButton(
           onPressed: addCow,
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)
-            )
-          ), 
-          child: const Icon(Icons.add)
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)
+          ),
+          color: colorScheme.surfaceContainerHigh,
+          child: Icon(Icons.add, color: colorScheme.primary) 
         ),
       ]
     );
@@ -153,9 +156,12 @@ class CowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 5),
-      color: Theme.of(context).colorScheme.secondaryContainer,
+      color: colorScheme.secondaryContainer,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         leading: Icon(MdiIcons.cow),
