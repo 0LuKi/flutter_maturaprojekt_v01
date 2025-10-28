@@ -1,10 +1,21 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
 
-class DashboardPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
+
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final _auth = AuthService();
+
+  @override
   Widget build(BuildContext context) {
+    
     
     final colorScheme = Theme.of(context).colorScheme;
     final double topSafeArea = MediaQuery.of(context).padding.top;
@@ -72,19 +83,13 @@ class DashboardPage extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          TextField(
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.search),
-                              hintText: "Search",
-                              filled: true,
-                              fillColor: colorScheme.surfaceContainerHigh,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                        ]
+                          FilledButton(
+                            onPressed: () async {
+                              await signout();
+                            }, 
+                            child: Text("Sign out")
+                          )
+                        ],
                       )
                     )
                   )
@@ -95,5 +100,10 @@ class DashboardPage extends StatelessWidget {
         ],
       ),   
     );
+  }
+
+  signout() async {
+    await _auth.signOut();
+    log("User signed out successfully");
   }
 }

@@ -1,4 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/content/register_page.dart';
+import 'package:flutter_maturaprojekt_v01/main.dart';
+import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
+import 'package:flutter_maturaprojekt_v01/utilities/pressable_text.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class LoginPage extends StatefulWidget {
@@ -9,6 +15,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _auth = AuthService();
 
   bool obscurePassword = true;
 
@@ -49,16 +56,6 @@ class _LoginPageState extends State<LoginPage> {
 
     final colorScheme = Theme.of(context).colorScheme;
 
-    OutlineInputBorder normalBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: BorderSide(color: colorScheme.outline)
-    );
-
-    OutlineInputBorder errorBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: BorderSide(color: Colors.red)
-    );
-
     return Scaffold(
       body: Stack(
         children: [
@@ -85,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
               
                       Text(
-                        "Login to your account",
+                        "Please log in to your account",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold
@@ -94,10 +91,14 @@ class _LoginPageState extends State<LoginPage> {
               
                       SizedBox(height: 8),
               
-                      Text("Email"),
+                      Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
+                          hintText: "Enter your email",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           filled: false,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -110,11 +111,15 @@ class _LoginPageState extends State<LoginPage> {
               
                       SizedBox(height: 15),
               
-                      Text("Password"),
+                      Text("Password", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         obscureText: obscurePassword,
                         controller: passwordController,
                         decoration: InputDecoration(
+                          hintText: "Enter your password",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
@@ -126,33 +131,38 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                           filled: false,
-                          enabledBorder: passwordError ? errorBorder : normalBorder,
-                          focusedBorder: passwordError ? errorBorder : normalBorder
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: colorScheme.outline
+                            )
+                          ),
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      SizedBox(height: 40),
                         
                       Center(
                         child: Column(
                           children: [
                             FilledButton(
-                            onPressed:() {
-                              setState(() {
-                                passwordError = passwordController.text != passwordRepeatController.text;
-                              });
-                            },
+                              onPressed: () async {
+                                await login();
+                              },
+                            
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
+                                child: Text(
+                                  "Log in", 
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: colorScheme.onPrimary
+                                  )
+                                ),
+                              )
+                            ),
 
-                          child: Text(
-                            "Signup", 
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: colorScheme.onPrimary
-                            )
-                          )
-                        ),
-
-                            SizedBox(height: 20),
+                            SizedBox(height: 30),
 
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -160,17 +170,20 @@ class _LoginPageState extends State<LoginPage> {
                                 Text(
                                   "Don't have an account? "
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    
-                                  },
-                                  child: Text(
-                                    "Signup",
-                                    style: TextStyle(
-                                      color: colorScheme.primary
-                                    )
-                                  )
-                                )
+                                PressableText(
+                                  text: "Sign up", 
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const RegisterPage()
+                                      )
+                                    );
+                                  }, 
+                                  style: TextStyle(
+                                    color: colorScheme.primary
+                                  ) 
+                                ),
                               ],
                             )
                           ],
@@ -185,5 +198,19 @@ class _LoginPageState extends State<LoginPage> {
         ],
       )
     );
+  }
+
+  goToHome(BuildContext context) => Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const HomePage())
+  );
+
+  login() async {
+    final user = await _auth.signInWithEmailAndPassword(emailController.text, passwordController.text);
+    if (user != null) {
+      log("User logged in successfully");
+      if (!mounted) return;
+      goToHome(context);
+    }
   }
 }

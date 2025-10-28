@@ -1,4 +1,9 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
+import 'package:flutter_maturaprojekt_v01/main.dart';
+import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
+import 'package:flutter_maturaprojekt_v01/utilities/pressable_text.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -9,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _auth = AuthService();
 
   bool obscurePassword = true;
 
@@ -85,7 +91,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
               
                       Text(
-                        "Create an account",
+                        "Sign up to create an account",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold
@@ -94,10 +100,14 @@ class _RegisterPageState extends State<RegisterPage> {
               
                       SizedBox(height: 8),
               
-                      Text("Name"),
+                      Text("Name", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         controller: nameController,
                         decoration: InputDecoration(
+                          hintText: "Enter your Name",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           filled: false,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -110,10 +120,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       
                       SizedBox(height: 15),
               
-                      Text("Email"),
+                      Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
+                          hintText: "Enter your email",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           filled: false,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -126,11 +140,15 @@ class _RegisterPageState extends State<RegisterPage> {
               
                       SizedBox(height: 15),
               
-                      Text("Password"),
+                      Text("Password", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         obscureText: obscurePassword,
                         controller: passwordController,
                         decoration: InputDecoration(
+                          hintText: "Enter your password",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
@@ -149,11 +167,15 @@ class _RegisterPageState extends State<RegisterPage> {
               
                       SizedBox(height: 15),
               
-                      Text("Retype password"),
+                      Text("Retype password", style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         obscureText: obscurePassword,
                         controller: passwordRepeatController,
                         decoration: InputDecoration(
+                          hintText: "Retype your password",
+                          hintStyle: TextStyle(
+                            color: colorScheme.outline
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
@@ -184,25 +206,58 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ],
                         ),
-                      
                         
                       SizedBox(height: 20),
                         
                       Center(
-                        child: FilledButton(
-                          onPressed:() {
-                            setState(() {
-                              passwordError = passwordController.text != passwordRepeatController.text;
-                            });
-                          },
+                        child: Column(
+                          children: [
+                            FilledButton(
+                            onPressed: () async {
+                              if (passwordController.text != passwordRepeatController.text) {
+                                setState(() {
+                                  passwordError = true;
+                                });
+                                return;
+                              }
+
+                              await signup();
+                            },
 
                           child: Text(
-                            "Signup", 
+                            "Sign up", 
                             style: TextStyle(
                               fontSize: 20,
                               color: colorScheme.onPrimary
                             )
                           )
+                        ),
+
+                            SizedBox(height: 20),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Already have an account? "
+                                ),
+                                PressableText(
+                                  text: "Log in", 
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginPage()
+                                      )
+                                    );
+                                  }, 
+                                  style: TextStyle(
+                                    color: colorScheme.primary
+                                  ) 
+                                ),
+                              ],
+                            )
+                          ],
                         ),
                       )
                     ],
@@ -214,5 +269,19 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       )
     );
+  }
+
+  goToHome(BuildContext context) => Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const HomePage())
+  );
+
+  signup() async {
+    final user = await _auth.createUserWithEmailAndPassword(emailController.text, passwordController.text);
+    if (user != null) {
+      log("User created successfully");
+      if (!mounted) return;
+      goToHome(context);
+    }
   }
 }

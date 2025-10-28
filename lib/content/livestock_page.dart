@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_maturaprojekt_v01/content/cow_list.dart';
-import 'package:flutter_maturaprojekt_v01/menus/bottom_nav_bar.dart';
 
 class LivestockPage extends StatelessWidget {
   const LivestockPage({super.key});
