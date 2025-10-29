@@ -29,10 +29,7 @@ class _PressableTextState extends State<PressableText> {
       child: AnimatedOpacity( 
         duration: const Duration(milliseconds: 100),
         opacity: pressed ? 0.5 : 1.0,
-        child: Transform.scale(
-          scale: pressed ? 0.97 : 1.0,
-          child: Text(widget.text, style: widget.style,)
-        )
+        child: Text(widget.text, style: widget.style,)
       ),
     );
   }

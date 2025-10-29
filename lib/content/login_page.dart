@@ -1,7 +1,10 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/content/forgot_password_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/register_page.dart';
+import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/main.dart';
 import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/pressable_text.dart';
@@ -22,24 +25,11 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController passwordRepeatController = TextEditingController();
 
-  bool passwordError = false;
+  bool wrongCred = false;
 
-  void checkPasswordsMatch() {
-    setState(() {
-      passwordError = passwordController.text.isNotEmpty &&
-                      passwordRepeatController.text.isNotEmpty && 
-                      passwordController.text != passwordRepeatController.text;
-    });
-  }
+  void checkPassword() {
 
-  @override
-  void initState() {
-    super.initState();
-
-    passwordController.addListener(checkPasswordsMatch);
-    passwordRepeatController.addListener(checkPasswordsMatch);
   }
 
   @override
@@ -47,14 +37,24 @@ class _LoginPageState extends State<LoginPage> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    passwordRepeatController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
 
     final colorScheme = Theme.of(context).colorScheme;
+
+    OutlineInputBorder normalBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colorScheme.outline)
+    );
+
+    OutlineInputBorder errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colorScheme.error)
+    );
 
     return Scaffold(
       body: Stack(
@@ -82,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
               
                       Text(
-                        "Please log in to your account",
+                        loc.please_login,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold
@@ -91,32 +91,34 @@ class _LoginPageState extends State<LoginPage> {
               
                       SizedBox(height: 8),
               
-                      Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         controller: emailController,
+                        onChanged: (_) {
+                          if (wrongCred) setState(() => wrongCred = false);
+                        },
                         decoration: InputDecoration(
-                          hintText: "Enter your email",
+                          hintText: loc.enter_email,
                           hintStyle: TextStyle(
                             color: colorScheme.outline
                           ),
                           filled: false,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: colorScheme.outline
-                            )
-                          ),
+                          enabledBorder: wrongCred ? errorBorder : normalBorder,
+                          focusedBorder: wrongCred ? errorBorder : normalBorder
                         ),
                       ),
               
                       SizedBox(height: 15),
               
-                      Text("Password", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
                       TextField(
                         obscureText: obscurePassword,
                         controller: passwordController,
+                        onChanged: (_) {
+                          if (wrongCred) setState(() => wrongCred = false);
+                        },
                         decoration: InputDecoration(
-                          hintText: "Enter your password",
+                          hintText: loc.enter_password,
                           hintStyle: TextStyle(
                             color: colorScheme.outline
                           ),
@@ -131,16 +133,37 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                           filled: false,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: colorScheme.outline
-                            )
-                          ),
+                          enabledBorder: wrongCred ? errorBorder : normalBorder,
+                          focusedBorder: wrongCred ? errorBorder : normalBorder
                         ),
                       ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            wrongCred ? loc.incorrect_cred : "",
+                            style: TextStyle(
+                              color: colorScheme.error
+                            )
+                          ),
+                          PressableText(
+                            text: loc.forgot_password_question + "?", 
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ForgotPassword()
+                                )
+                              );
+                            }, 
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                            )
+                          ),
+                        ],
+                      ),
 
-                      SizedBox(height: 40),
+                      SizedBox(height: 30),
                         
                       Center(
                         child: Column(
@@ -153,9 +176,9 @@ class _LoginPageState extends State<LoginPage> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
                                 child: Text(
-                                  "Log in", 
+                                  loc.login, 
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 15,
                                     color: colorScheme.onPrimary
                                   )
                                 ),
@@ -163,15 +186,15 @@ class _LoginPageState extends State<LoginPage> {
                             ),
 
                             SizedBox(height: 30),
-
+                            
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Don't have an account? "
+                                  loc.dont_have_account + "? "
                                 ),
                                 PressableText(
-                                  text: "Sign up", 
+                                  text: loc.signup, 
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -181,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                                     );
                                   }, 
                                   style: TextStyle(
-                                    color: colorScheme.primary
+                                    color: colorScheme.primary,
                                   ) 
                                 ),
                               ],
@@ -200,17 +223,40 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  goToHome(BuildContext context) => Navigator.pushReplacement(
+  goToHome(BuildContext context) => Navigator.pushAndRemoveUntil(
     context,
-    MaterialPageRoute(builder: (context) => const HomePage())
+    MaterialPageRoute(builder: (_) => const HomePage()),
+      (route) => false,
   );
 
   login() async {
-    final user = await _auth.signInWithEmailAndPassword(emailController.text, passwordController.text);
-    if (user != null) {
-      log("User logged in successfully");
-      if (!mounted) return;
-      goToHome(context);
+
+    try{
+
+      final user = await _auth.signInWithEmailAndPassword(emailController.text.trim(), passwordController.text.trim());
+      
+      if (user != null) {
+        log("User logged in successfully");
+        if (!mounted) return;
+        setState(() => wrongCred = false);
+        goToHome(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      log("login error: ${e.code}");
+
+      // Detect wrong password error
+      if (e.code == 'wrong-password' ||
+          e.code == 'user-not-found' ||
+          e.code == 'invalid-credential') {
+        setState(() => wrongCred = true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? "Something went wrong.")),
+        );
+      }
+
+    } catch (e) {
+      log("Unexpected login error: $e");
     }
   }
 }

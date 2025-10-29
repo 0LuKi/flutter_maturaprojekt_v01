@@ -1,6 +1,9 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
+import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -15,7 +18,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     
+    final user = FirebaseAuth.instance.currentUser;
     
     final colorScheme = Theme.of(context).colorScheme;
     final double topSafeArea = MediaQuery.of(context).padding.top;
@@ -47,9 +52,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: AppBar(
-                    title: const Text(
-                      'Dashboard',
-                      style: TextStyle(
+                    title: Text(
+                      loc.dashboard,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 30,
                       )
@@ -87,8 +92,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             onPressed: () async {
                               await signout();
                             }, 
-                            child: Text("Sign out")
-                          )
+                            child: Text(loc.sign_out)
+                          ),
+                          Text("Welcome, ${user?.displayName ?? 'User'}")
                         ],
                       )
                     )
@@ -105,5 +111,13 @@ class _DashboardPageState extends State<DashboardPage> {
   signout() async {
     await _auth.signOut();
     log("User signed out successfully");
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false, // remove all previous routes
+    );
   }
+
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class CowList extends StatefulWidget {
@@ -18,6 +19,9 @@ class _CowListState extends State<CowList> {
 
   @override
   Widget build(BuildContext context) {
+
+    final loc = AppLocalizations.of(context)!;
+
     return StreamBuilder<QuerySnapshot>(
       stream: firestoreRef.snapshots(),
       builder: (context, snapshot) {
@@ -35,12 +39,12 @@ class _CowListState extends State<CowList> {
 
         // Kein Snapshot bekommen
         if (_isFirstLoad && !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         // Wenn keine Kühe
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("Keine Kühe gefunden"));
+          return Center(child: Text(loc.no_cows_found));
         }
 
         // Normale Anzeige
@@ -85,6 +89,7 @@ class _AddCowState extends State<AddCow> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
 
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -94,7 +99,7 @@ class _AddCowState extends State<AddCow> {
           child: TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText: 'Cow Name',
+              hintText: loc.cow_name,
               filled: true,
               fillColor: colorScheme.surfaceContainerHigh,
               border: OutlineInputBorder(
@@ -125,16 +130,19 @@ class CowCard extends StatelessWidget {
   const CowCard({super.key, required this.id, required this.name});
 
   void _confirmDelete(BuildContext context) {
+
+  final loc = AppLocalizations.of(context)!;
+
   showDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text("Delete Cow"),
-        content: const Text("Do you really want to delete this cow?"),
+        title: Text(loc.delete_cow),
+        content: Text("${loc.delete_cow_conf}?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(loc.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -142,11 +150,11 @@ class CowCard extends StatelessWidget {
               await FirebaseFirestore.instance.collection('cows').doc(id).delete();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Cow deleted")),
+                  SnackBar(content: Text(loc.cow_deleted)),
                 );
               }
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: TextStyle(color: Colors.red)),
           ),
         ],
       );

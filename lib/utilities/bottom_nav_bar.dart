@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -13,6 +14,8 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -32,17 +35,17 @@ class BottomNavBar extends StatelessWidget {
           NavigationDestination(
             icon: Icon(MdiIcons.homeAnalytics),
             selectedIcon: Icon(MdiIcons.homeAnalytics),
-            label: "Dashboard",
+            label: loc.dashboard,
           ),
           NavigationDestination(
             icon: Icon(MdiIcons.cow),
             selectedIcon: Icon(MdiIcons.cow),
-            label: "Livestock",
+            label: loc.livestock,
           ),
           NavigationDestination(
             icon: Icon(MdiIcons.calendar),
             selectedIcon: Icon(MdiIcons.calendar),
-            label: "Appointments",
+            label: loc.appointments,
           ),
         ],
       ),

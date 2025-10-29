@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_maturaprojekt_v01/content/cow_list.dart';
+import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 
 class LivestockPage extends StatelessWidget {
   const LivestockPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-
+    final loc = AppLocalizations.of(context)!;
     
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -39,8 +40,8 @@ class LivestockPage extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: AppBar(
-                    title: const Text(
-                      'Livestock',
+                    title: Text(
+                      loc.livestock,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 30,
@@ -49,7 +50,7 @@ class LivestockPage extends StatelessWidget {
                     actions: [
                       IconButton(
                         onPressed: () {  },
-                        tooltip: "Menu",
+                        tooltip: loc.menu,
                         icon: Icon(Icons.menu_rounded, size: 40),
                         
                       )
@@ -78,7 +79,7 @@ class LivestockPage extends StatelessWidget {
                           TextField(
                             decoration: InputDecoration(
                               prefixIcon: Icon(Icons.search),
-                              hintText: "Search",
+                              hintText: loc.search,
                               filled: true,
                               fillColor: colorScheme.surfaceContainerHigh,
                               border: OutlineInputBorder(

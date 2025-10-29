@@ -10,6 +10,8 @@ import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 
 
@@ -28,6 +30,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
 
@@ -35,15 +38,37 @@ class MyApp extends StatelessWidget {
           filledButtonTheme: AppTheme.filledButtonTheme(
             ColorsLight.primary,
             Colors.white
-          ),       // Nicht vergessen hier Farbe für Buttons ändern
+          ),       // NICHT VERGESSEN hier Farbe für Buttons auch ändern
         );
         final ThemeData baseDark = AppTheme.darkTheme;
 
         return MaterialApp(
-          title: 'Flutter Demo',
+          title: "FarmManager",
           theme: baseLight,
           darkTheme: baseLight,        // danach auf baseDark ändern
           themeMode: ThemeMode.system,
+
+          // Andere Sprachen
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('de')
+          ],
+
+          localeResolutionCallback: (locale, supportedLocales) {
+            for (var supportedLocales in supportedLocales) {
+              if (supportedLocales.languageCode == locale?.languageCode) {
+                return supportedLocales;
+              }
+            }
+            return supportedLocales.first;
+          },
+
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
