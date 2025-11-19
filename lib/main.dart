@@ -7,6 +7,7 @@ import 'package:flutter_maturaprojekt_v01/content/livestock_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/bottom_nav_bar.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
+import 'package:flutter_maturaprojekt_v01/utilities/open_menu.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -116,6 +117,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const OpenMenu(),
       body: IndexedStack(
         index: currentPageIndex,
         children: pages,
@@ -126,4 +128,5 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 }
