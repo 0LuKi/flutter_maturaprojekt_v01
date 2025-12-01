@@ -61,9 +61,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     actions: [
                       IconButton(
                         onPressed: () => {
-                          log("dasdd"),
                           Scaffold.of(context).openEndDrawer()
-                          },
+                        },
                         tooltip: "Menu",
                         icon: Icon(Icons.menu_rounded, size: 40),
                         
@@ -90,12 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          FilledButton(
-                            onPressed: () async {
-                              await signout();
-                            }, 
-                            child: Text(loc.sign_out)
-                          ),
+                          
                           Text("Welcome, ${user?.displayName ?? 'User'}"),
 
 
@@ -258,9 +252,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
 
 
+                          // LOGOUT button
+                          SizedBox(height: 40),
 
-
-
+                          FilledButton(
+                            onPressed: () async {
+                              await signout();
+                            }, 
+                            child: Text(loc.sign_out)
+                          ),
 
 
 

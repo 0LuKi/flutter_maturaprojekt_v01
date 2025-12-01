@@ -49,7 +49,9 @@ class LivestockPage extends StatelessWidget {
                     ),
                     actions: [
                       IconButton(
-                        onPressed: () {  },
+                        onPressed: () => {
+                          Scaffold.of(context).openEndDrawer()
+                        },
                         tooltip: loc.menu,
                         icon: Icon(Icons.menu_rounded, size: 40),
                         
@@ -76,7 +78,7 @@ class LivestockPage extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          TextField(
+                          /*TextField(
                             decoration: InputDecoration(
                               prefixIcon: Icon(Icons.search),
                               hintText: loc.search,
@@ -87,14 +89,14 @@ class LivestockPage extends StatelessWidget {
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                          ),
+                          ),*/
                               
                           const SizedBox(height: 15),
                   
                           Expanded(
                             child: Column(
                               children: [                    
-                                AddCow(),
+                                //AddCow(),
                                 const SizedBox(height: 15),
                                 Expanded(                                  
                                   child: CowList(),
