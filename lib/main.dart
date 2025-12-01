@@ -10,18 +10,23 @@ import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/open_menu.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 
-
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-  options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+    );
+  } catch (e) {
+    debugPrint("Persistence not supported on this platform: $e");
+  }
   runApp(const MyApp());
 }
 
@@ -31,22 +36,20 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-
         final ThemeData baseLight = AppTheme.lightTheme.copyWith(
           filledButtonTheme: AppTheme.filledButtonTheme(
             ColorsLight.primary,
-            Colors.white
-          ),       // NICHT VERGESSEN hier Farbe für Buttons auch ändern
+            Colors.white,
+          ), // NICHT VERGESSEN hier Farbe für Buttons auch ändern
         );
         final ThemeData baseDark = AppTheme.darkTheme;
 
         return MaterialApp(
           title: "FarmManager",
           theme: baseLight,
-          darkTheme: baseLight,        // danach auf baseDark ändern
+          darkTheme: baseLight, // danach auf baseDark ändern
           themeMode: ThemeMode.system,
 
           // Andere Sprachen
@@ -56,10 +59,7 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('de')
-          ],
+          supportedLocales: const [Locale('en'), Locale('de')],
 
           localeResolutionCallback: (locale, supportedLocales) {
             for (var supportedLocales in supportedLocales) {
@@ -84,10 +84,10 @@ class MyApp extends StatelessWidget {
               } else {
                 return const LoginPage();
               }
-            }
+            },
           ),
         );
-      }
+      },
     );
   }
 }
@@ -102,11 +102,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int currentPageIndex = 0;
 
-  final pages = [
-    DashboardPage(),
-    LivestockPage(),
-    AppointmentsPage(),
-  ];
+  final pages = [DashboardPage(), LivestockPage(), AppointmentsPage()];
 
   void onTabChanged(int index) {
     setState(() {
@@ -118,15 +114,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: const OpenMenu(),
-      body: IndexedStack(
-        index: currentPageIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: currentPageIndex, children: pages),
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentPageIndex,
         onIndexChanged: onTabChanged,
       ),
     );
   }
-
 }
