@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_maturaprojekt_v01/content/cow_detail.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
+import 'package:flutter_maturaprojekt_v01/models/animal.dart';
+import 'package:flutter_maturaprojekt_v01/services/database_service.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class CowList extends StatefulWidget {
@@ -10,81 +13,22 @@ class CowList extends StatefulWidget {
   State<CowList> createState() => _CowListState();
 }
 
-
-
 class _CowListState extends State<CowList> {
-  final firestoreRef = FirebaseFirestore.instance.collection('cows');
-  QuerySnapshot? _lastSnapshot;
-  bool _isFirstLoad = true;
+  DatabaseService? _dbService;
 
   @override
-  Widget build(BuildContext context) {
-
-    final loc = AppLocalizations.of(context)!;
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: firestoreRef.snapshots(),
-      builder: (context, snapshot) {
-        // Wenn gerade geladen
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            _lastSnapshot != null) {
-          return _buildList(_lastSnapshot!);
-        }
-
-        // Wenn neue Daten
-        if (snapshot.hasData) {
-          _lastSnapshot = snapshot.data!;
-          _isFirstLoad = false;
-        }
-
-        // Kein Snapshot bekommen
-        if (_isFirstLoad && !snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        // Wenn keine Kühe
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text(loc.no_cows_found));
-        }
-
-        // Normale Anzeige
-        return _buildList(snapshot.data!);
-      },
-    );
+  void initState() {
+    super.initState();
+    _initService();
   }
 
-  Widget _buildList(QuerySnapshot snapshot) {
-    final docs = snapshot.docs;
-
-    return ListView.builder(
-      itemCount: docs.length,
-      itemBuilder: (context, index) {
-        final data = docs[index].data() as Map<String, dynamic>;
-        final id = docs[index].id;
-        final name = data['name'] ?? 'Unbekannt';
-        return CowCard(id: id, name: name);
-      },
-    );
-  }
-}
-
-
-// Item zur Liste hinzufügen
-class AddCow extends StatefulWidget {
-  const AddCow({super.key});
-
-  @override
-  State<AddCow> createState() => _AddCowState();
-}
-
-class _AddCowState extends State<AddCow> {
-  final TextEditingController _controller = TextEditingController();
-  final firestoreRef = FirebaseFirestore.instance.collection('cows');
-
-  void addCow() {
-    if (_controller.text.isEmpty) return;
-    firestoreRef.add({'name': _controller.text});
-    _controller.clear();
+  void _initService() {
+    final user = FirebaseAuth.instance.currentUser;
+    if(user != null) {
+      setState(() {
+        _dbService = DatabaseService(userId: user.uid);
+      });
+    }
   }
 
   @override
@@ -93,41 +37,146 @@ class _AddCowState extends State<AddCow> {
 
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              hintText: loc.cow_name,
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHigh,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none
-              )
-            ),
-          ),
-        ),
-        SizedBox(width: 10),
-        MaterialButton(
-          onPressed: addCow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)
-          ),
-          color: colorScheme.surfaceContainerHigh,
-          child: Icon(Icons.add, color: colorScheme.primary) 
-        ),
-      ]
+    // Ladekreis, wenn Service nicht bereit
+    if (_dbService == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Scaffold(
+      body: StreamBuilder<List<Animal>>(
+        stream: _dbService?.getAnimals(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text("${loc.error}: ${snapshot.error}"));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(MdiIcons.cowOff, size: 64, color: colorScheme.surfaceContainerLow),
+                  const SizedBox(height: 16),
+                  Text(loc.no_cows_found),
+                ],
+              ),
+            );
+          }
+
+          final animals = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: animals.length,
+            padding: const EdgeInsets.only(bottom: 80),
+            itemBuilder: (context, index) {
+              final animal = animals[index];
+              return CowCard(
+                animal: animal,
+                dbService: _dbService
+              );
+            },
+          );
+        }
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddAnimalDialog(context, loc, _dbService),
+        label: Text(loc.add_cow),
+        icon: const Icon(Icons.add),
+        backgroundColor: colorScheme.primaryContainer,
+      ),
     );
   }
 }
 
-class CowCard extends StatelessWidget {
-  final String id;
-  final String name;
 
-  const CowCard({super.key, required this.id, required this.name});
+void _showAddAnimalDialog(BuildContext context, AppLocalizations loc, DatabaseService? dbService) {
+  final nameController = TextEditingController();
+  final earTagController = TextEditingController();
+  bool isCalf = false;
+
+  showDialog(
+    context: context, 
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(loc.add_cow),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: loc.cow_name,
+                      prefixIcon: Icon(MdiIcons.cow),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: earTagController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: loc.eartagnumber,
+                      prefixIcon: const Icon(Icons.confirmation_num),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    value: isCalf, 
+                    onChanged: (val) => setState(() => isCalf = val),
+                    title: Text("${loc.calf}?"),
+                    secondary: Icon(isCalf ? MdiIcons.babyCarriage : MdiIcons.cow)
+                  )
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context), 
+                child: Text(loc.cancel),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (nameController.text.isEmpty) return;
+
+                  final newAnimal = Animal(
+                    id: '',
+                    name: nameController.text,
+                    earTagNumber: earTagController.text,
+                    birthDate: DateTime.now(), // NUR FÜR DEMO
+                    isCalf: isCalf,
+                    lactationNumber: 0
+                  );
+
+                  dbService!.addAnimal(newAnimal);
+                  Navigator.pop(context);
+                }, 
+                child: Text(loc.save)
+              )
+            ],
+          );
+        }
+      );
+    }
+  );
+}
+
+class CowCard extends StatelessWidget {
+  final Animal animal;
+  final DatabaseService? dbService;
+
+  const CowCard({
+    super.key, 
+    required this.animal, 
+    required this.dbService
+  });
 
   void _confirmDelete(BuildContext context) {
 
@@ -147,12 +196,8 @@ class CowCard extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // close dialog first
-              await FirebaseFirestore.instance.collection('cows').doc(id).delete();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(loc.cow_deleted)),
-                );
-              }
+              
+              await dbService?.deleteAnimal(animal.id);
             },
             child: Text(loc.delete, style: TextStyle(color: Colors.red)),
           ),
@@ -164,23 +209,57 @@ class CowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final colorScheme = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      color: colorScheme.secondaryContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      color: animal.isCalf ? Colors.orange[50] : colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(MdiIcons.cow),
+        leading: CircleAvatar(
+          backgroundColor: animal.isCalf ? Colors.orange[200] : colorScheme.primaryContainer,
+          child: Icon(
+            animal.isCalf ? MdiIcons.babyCarriage : MdiIcons.cow,
+            color: colorScheme.onPrimaryContainer,
+          ),
+        ),
         title: Text(
-          name,
+          animal.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () => _confirmDelete(context),
+        subtitle: Text(
+          animal.earTagNumber.isNotEmpty 
+            ? '${loc.et}: ${animal.earTagNumber}' 
+            : loc.no_eartag,
         ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!animal.isCalf)
+              Chip(
+                label: Text('${animal.lactationNumber}'),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                backgroundColor: Colors.white54,
+              ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.grey),
+              onPressed: () => _confirmDelete(context),
+            ),
+          ],
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CowDetail(
+                animal: animal,
+                dbService: dbService,
+              )
+            )
+          );
+        },
       ),
     );
   }

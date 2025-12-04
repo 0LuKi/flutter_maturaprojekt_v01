@@ -39,5 +39,15 @@
   "retype_password2": "Retype your Password",
   "diff_passwords": "Passwords do not match",
   "signup": "Signup",
-  "have_account": "Already have an account"
+  "have_account": "Already have an account",
+  "error": "Error",
+  "add_cow": "Add animal",
+  "eartagnumber": "Eartagnumber",
+  "calf": "calf",
+  "save": "Save",
+  "no_eartag": "No eartagnumber",
+  "et": "ET",
+  "milk": "Milk",
+  "health": "Health",
+  "calving": "calving"
 }

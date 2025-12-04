@@ -340,6 +340,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already have an account'**
   String get have_account;
+
+  /// No description provided for @error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get error;
+
+  /// No description provided for @add_cow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add animal'**
+  String get add_cow;
+
+  /// No description provided for @eartagnumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Eartagnumber'**
+  String get eartagnumber;
+
+  /// No description provided for @calf.
+  ///
+  /// In en, this message translates to:
+  /// **'calf'**
+  String get calf;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @no_eartag.
+  ///
+  /// In en, this message translates to:
+  /// **'No eartagnumber'**
+  String get no_eartag;
+
+  /// No description provided for @et.
+  ///
+  /// In en, this message translates to:
+  /// **'ET'**
+  String get et;
+
+  /// No description provided for @milk.
+  ///
+  /// In en, this message translates to:
+  /// **'Milk'**
+  String get milk;
+
+  /// No description provided for @health.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get health;
+
+  /// No description provided for @calving.
+  ///
+  /// In en, this message translates to:
+  /// **'calving'**
+  String get calving;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

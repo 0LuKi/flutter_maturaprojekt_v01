@@ -130,4 +130,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get have_account => 'Sie haben bereits ein Konto';
+
+  @override
+  String get error => 'Fehler';
+
+  @override
+  String get add_cow => 'Tier hinzufügen';
+
+  @override
+  String get eartagnumber => 'Ohrmarkennummer';
+
+  @override
+  String get calf => 'Kalb';
+
+  @override
+  String get save => 'Speichern';
+
+  @override
+  String get no_eartag => 'Keine Ohrmarke';
+
+  @override
+  String get et => 'OM';
+
+  @override
+  String get milk => 'Milch';
+
+  @override
+  String get health => 'Gesundheit';
+
+  @override
+  String get calving => 'Kalbung';
 }

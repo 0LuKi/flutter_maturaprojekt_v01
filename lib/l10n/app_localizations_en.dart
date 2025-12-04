@@ -130,4 +130,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get have_account => 'Already have an account';
+
+  @override
+  String get error => 'Error';
+
+  @override
+  String get add_cow => 'Add animal';
+
+  @override
+  String get eartagnumber => 'Eartagnumber';
+
+  @override
+  String get calf => 'calf';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get no_eartag => 'No eartagnumber';
+
+  @override
+  String get et => 'ET';
+
+  @override
+  String get milk => 'Milk';
+
+  @override
+  String get health => 'Health';
+
+  @override
+  String get calving => 'calving';
 }

@@ -39,5 +39,15 @@
   "retype_password2": "Wiederholen Sie Ihr Passwort",
   "diff_passwords": "Passwörter stimmen nicht überein",
   "signup": "Registrieren",
-  "have_account": "Sie haben bereits ein Konto"
+  "have_account": "Sie haben bereits ein Konto",
+  "error": "Fehler",
+  "add_cow": "Tier hinzufügen",
+  "eartagnumber": "Ohrmarkennummer",
+  "calf": "Kalb",
+  "save": "Speichern",
+  "no_eartag": "Keine Ohrmarke",
+  "et": "OM",
+  "milk": "Milch",
+  "health": "Gesundheit",
+  "calving": "Kalbung"
 }

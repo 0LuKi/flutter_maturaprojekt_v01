@@ -23,7 +23,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final loc = AppLocalizations.of(context)!;
     
     final user = FirebaseAuth.instance.currentUser;
-    
+
     final colorScheme = Theme.of(context).colorScheme;
     final double topSafeArea = MediaQuery.of(context).padding.top;
     
