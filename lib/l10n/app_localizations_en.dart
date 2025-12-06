@@ -160,4 +160,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calving => 'calving';
+
+  @override
+  String get welcome => 'Welcome';
 }

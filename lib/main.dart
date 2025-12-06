@@ -113,7 +113,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      endDrawer: const OpenMenu(),
+      endDrawer: OpenMenu(
+        currentIndex: currentPageIndex,
+        onIndexChanged: onTabChanged,
+      ),
       body: IndexedStack(index: currentPageIndex, children: pages),
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentPageIndex,

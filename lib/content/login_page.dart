@@ -21,6 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   final _auth = AuthService();
 
   bool obscurePassword = true;
+  bool isLoading = false;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -57,168 +58,182 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-
-                spacing: 30,
-
-                children: [
-                        
-                  Image(
-                    image: AssetImage('assets/images/FarmManager_LOGO3.png'),
-                        
-                  ),
-              
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 5,
-              
-                    children: [
-              
-                      Text(
-                        loc.please_login,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold
-                        )
-                      ),
-              
-                      SizedBox(height: 8),
-              
-                      Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        controller: emailController,
-                        onChanged: (_) {
-                          if (wrongCred) setState(() => wrongCred = false);
-                        },
-                        decoration: InputDecoration(
-                          hintText: loc.enter_email,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          filled: false,
-                          enabledBorder: wrongCred ? errorBorder : normalBorder,
-                          focusedBorder: wrongCred ? errorBorder : normalBorder
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+            
+                  spacing: 30,
+            
+                  children: [
+                          
+                    Image(
+                      image: AssetImage('assets/images/FarmManager_LOGO3.png'),
+                          
+                    ),
+                
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 5,
+                
+                      children: [
+                
+                        Text(
+                          loc.please_login,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold
+                          )
                         ),
-                      ),
-              
-                      SizedBox(height: 15),
-              
-                      Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        obscureText: obscurePassword,
-                        controller: passwordController,
-                        onChanged: (_) {
-                          if (wrongCred) setState(() => wrongCred = false);
-                        },
-                        decoration: InputDecoration(
-                          hintText: loc.enter_password,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
+                
+                        SizedBox(height: 8),
+                
+                        Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          controller: emailController,
+                          onChanged: (_) {
+                            if (wrongCred) setState(() => wrongCred = false);
+                          },
+                          decoration: InputDecoration(
+                            hintText: loc.enter_email,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
                             ),
-                            onPressed: () {
-                              setState(() {
-                                obscurePassword = !obscurePassword;
-                              });
-                            },
+                            filled: false,
+                            enabledBorder: wrongCred ? errorBorder : normalBorder,
+                            focusedBorder: wrongCred ? errorBorder : normalBorder
                           ),
-                          filled: false,
-                          enabledBorder: wrongCred ? errorBorder : normalBorder,
-                          focusedBorder: wrongCred ? errorBorder : normalBorder
                         ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            wrongCred ? loc.incorrect_cred : "",
-                            style: TextStyle(
-                              color: colorScheme.error
-                            )
-                          ),
-                          PressableText(
-                            text: loc.forgot_password_question + "?", 
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ForgotPassword()
-                                )
-                              );
-                            }, 
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                            )
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 30),
-                        
-                      Center(
-                        child: Column(
-                          children: [
-                            FilledButton(
-                              onPressed: () async {
-                                await login();
+                
+                        SizedBox(height: 15),
+                
+                        Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          obscureText: obscurePassword,
+                          controller: passwordController,
+                          onChanged: (_) {
+                            if (wrongCred) setState(() => wrongCred = false);
+                          },
+                          decoration: InputDecoration(
+                            hintText: loc.enter_password,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  obscurePassword = !obscurePassword;
+                                });
                               },
-                            
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
-                                child: Text(
-                                  loc.login, 
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: colorScheme.onPrimary
-                                  )
-                                ),
+                            ),
+                            filled: false,
+                            enabledBorder: wrongCred ? errorBorder : normalBorder,
+                            focusedBorder: wrongCred ? errorBorder : normalBorder
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              wrongCred ? loc.incorrect_cred : "",
+                              style: TextStyle(
+                                color: colorScheme.error
                               )
                             ),
-
-                            SizedBox(height: 30),
-                            
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  loc.dont_have_account + "? "
-                                ),
-                                PressableText(
-                                  text: loc.signup, 
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const RegisterPage()
-                                      )
-                                    );
-                                  }, 
-                                  style: TextStyle(
-                                    color: colorScheme.primary,
-                                  ) 
-                                ),
-                              ],
-                            )
+                            PressableText(
+                              text: "${loc.forgot_password_question}?", 
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ForgotPassword()
+                                  )
+                                );
+                              }, 
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                              )
+                            ),
                           ],
                         ),
-                      )
-                    ],
-                  )
-                ],
+            
+                        SizedBox(height: 30),
+                          
+                        Center(
+                          child: Column(
+                            children: [
+                              FilledButton(
+                                onPressed: isLoading ? null : () async {
+                                  await login();
+                                },
+                              
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
+                                  child: isLoading
+                                  ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        colorScheme.onPrimary
+                                      ),
+                                    )
+                                  ) 
+                                  : Text(
+                                    loc.login, 
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: colorScheme.onPrimary
+                                    )
+                                  ),
+                                )
+                              ),
+            
+                              SizedBox(height: 30),
+                              
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${loc.dont_have_account}? "
+                                  ),
+                                  if (!isLoading)
+                                    PressableText(
+                                      text: loc.signup, 
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const RegisterPage()
+                                          )
+                                        );
+                                      }, 
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                      ) 
+                                    ),
+                                ],
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       )
     );
   }
@@ -230,6 +245,7 @@ class _LoginPageState extends State<LoginPage> {
   );
 
   login() async {
+    setState(() => isLoading = true);
 
     try{
 
@@ -257,6 +273,8 @@ class _LoginPageState extends State<LoginPage> {
 
     } catch (e) {
       log("Unexpected login error: $e");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 }

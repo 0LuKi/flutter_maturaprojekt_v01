@@ -32,6 +32,7 @@ class _CowDetailState extends State<CowDetail> with SingleTickerProviderStateMix
 
     // 4 Tabs: Info, Milch, Medizin, Kalbungen
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() => setState(() {}));
   }
 
   @override
@@ -215,24 +216,22 @@ class _CowDetailState extends State<CowDetail> with SingleTickerProviderStateMix
 
   // --- FLOATING ACTION BUTTON ---
   Widget? _buildFloatingActionButton() {
-    // Zeige FAB nur auf Tabs 1, 2, 3 (nicht auf Übersicht)
-    // Wir müssen den Index vom Controller abhören, 
-    // aber standardmäßig baut Flutter den FAB nicht neu bei Tab-Wechsel.
-    // Workaround: Wir verwenden AnimatedBuilder oder setState beim Tab-Listener.
-    // Für Einfachheit hier: Ein generischer "Add"-Button, der ein Menü öffnet,
-    // oder wir lassen es simpel und zeigen ihn immer an.
-    
-    return FloatingActionButton(
-      child: const Icon(Icons.add),
-      onPressed: () {
-        if (_tabController.index == 1) _showAddMilkDialog();
-        else if (_tabController.index == 2) _showAddMedicalDialog();
-        else if (_tabController.index == 3) _showAddCalvingDialog();
-        else {
-           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bitte wählen Sie einen Tab (Milch, Gesundheit...)')));
-        }
-      },
-    );
+
+    if (_tabController.index >= 1 && _tabController.index <= 3) {
+      return FloatingActionButton(
+        onPressed: () {
+          if (_tabController.index == 1) { _showAddMilkDialog(); } 
+          else if (_tabController.index == 2) { _showAddMedicalDialog(); }
+          else if (_tabController.index == 3) { _showAddCalvingDialog(); }
+          else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bitte wählen Sie einen Tab (Milch, Gesundheit...)')));
+          }
+        },
+        child: const Icon(Icons.add),
+      );
+    } else {
+      return null;
+    }
   }
 
   // --- DIALOGS ---

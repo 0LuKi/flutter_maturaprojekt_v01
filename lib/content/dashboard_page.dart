@@ -1,10 +1,6 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
-import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
 
 import 'package:fl_chart/fl_chart.dart';
 
@@ -16,8 +12,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final _auth = AuthService();
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -249,23 +243,6 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                             ),
                           ),
-
-
-
-                          // LOGOUT button
-                          SizedBox(height: 40),
-
-                          FilledButton(
-                            onPressed: () async {
-                              await signout();
-                            }, 
-                            child: Text(loc.sign_out)
-                          ),
-
-
-
-
-
                         ],
                       )
                     )
@@ -277,17 +254,4 @@ class _DashboardPageState extends State<DashboardPage> {
         ],  
     );
   }
-
-  signout() async {
-    await _auth.signOut();
-    log("User signed out successfully");
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false, // remove all previous routes
-    );
-  }
-
 }

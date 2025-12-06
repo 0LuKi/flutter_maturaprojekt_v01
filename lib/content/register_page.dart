@@ -19,6 +19,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _auth = AuthService();
 
   bool obscurePassword = true;
+  bool isLoading = false;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -70,216 +71,230 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-
-                spacing: 30,
-
-                children: [
-                        
-                  Image(
-                    image: AssetImage('assets/images/FarmManager_LOGO3.png'),
-                        
-                  ),
-              
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 5,
-              
-                    children: [
-              
-                      Text(
-                        loc.signup_create,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold
-                        )
-                      ),
-              
-                      SizedBox(height: 8),
-              
-                      Text(loc.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          hintText: loc.enter_name,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          filled: false,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: colorScheme.outline
-                            )
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: 15),
-              
-                      Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        controller: emailController,
-                        onChanged: (_) {
-                          if (userExists) setState(() => userExists = false);
-                        },
-                        decoration: InputDecoration(
-                          hintText: loc.enter_email,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          filled: false,
-                          enabledBorder: userExists ? errorBorder : normalBorder,
-                          focusedBorder: userExists ? errorBorder : normalBorder
-                        ),
-                      ),
-                      if (userExists)
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+        
+                  spacing: 30,
+        
+                  children: [
+                          
+                    Image(
+                      image: AssetImage('assets/images/FarmManager_LOGO3.png'),
+                          
+                    ),
+                
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 5,
+                
+                      children: [
+                
                         Text(
-                          loc.email_in_use + ".",
+                          loc.signup_create,
                           style: TextStyle(
-                            color: colorScheme.error
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold
                           )
                         ),
-              
-                      SizedBox(height: 15),
-              
-                      Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        obscureText: obscurePassword,
-                        controller: passwordController,
-                        decoration: InputDecoration(
-                          hintText: loc.enter_password,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
+                
+                        SizedBox(height: 8),
+                
+                        Text(loc.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            hintText: loc.enter_name,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
                             ),
-                            onPressed: () {
-                              setState(() {
-                                obscurePassword = !obscurePassword;
-                              });
-                            },
-                          ),
-                          filled: false,
-                          enabledBorder: passwordError ? errorBorder : normalBorder,
-                          focusedBorder: passwordError ? errorBorder : normalBorder
-                        ),
-                      ),
-              
-                      SizedBox(height: 15),
-              
-                      Text(loc.retype_password, style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        obscureText: obscurePassword,
-                        controller: passwordRepeatController,
-                        decoration: InputDecoration(
-                          hintText: loc.retype_password2,
-                          hintStyle: TextStyle(
-                            color: colorScheme.outline
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                obscurePassword = !obscurePassword;
-                              });
-                            },
-                          ),
-                          filled: false,
-                          enabledBorder: passwordError ? errorBorder : normalBorder,
-                          focusedBorder: passwordError ? errorBorder : normalBorder
-                        ),
-                      ),
-              
-                      if (passwordError) 
-              
-                        Row(
-                          spacing: 3,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(MdiIcons.alertCircleOutline, color: colorScheme.error,),
-                            Text(
-                              loc.diff_passwords,
-                              style: TextStyle(color: colorScheme.error)
-                            ),
-                          ],
-                        ),
-                        
-                      SizedBox(height: 40),
-                        
-                      Center(
-                        child: Column(
-                          children: [
-                            FilledButton(
-                              onPressed: () async {
-                                if (passwordController.text != passwordRepeatController.text) {
-                                  setState(() {
-                                    passwordError = true;
-                                  });
-                                  return;
-                                }
-
-                                await signup();
-                              },
-
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
-                                child: Text(
-                                  loc.signup, 
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: colorScheme.onPrimary
-                                  )
-                                ),
+                            filled: false,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: colorScheme.outline
                               )
                             ),
-
-                            SizedBox(height: 30),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  loc.have_account + "? "
-                                ),
-                                PressableText(
-                                  text: loc.login, 
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const LoginPage()
-                                      )
-                                    );
-                                  }, 
-                                  style: TextStyle(
-                                    color: colorScheme.primary
-                                  ) 
-                                ),
-                              ],
-                            )
-                          ],
+                          ),
                         ),
-                      )
-                    ],
-                  )
-                ],
+                        
+                        SizedBox(height: 15),
+                
+                        Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          controller: emailController,
+                          onChanged: (_) {
+                            if (userExists) setState(() => userExists = false);
+                          },
+                          decoration: InputDecoration(
+                            hintText: loc.enter_email,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
+                            ),
+                            filled: false,
+                            enabledBorder: userExists ? errorBorder : normalBorder,
+                            focusedBorder: userExists ? errorBorder : normalBorder
+                          ),
+                        ),
+                        if (userExists)
+                          Text(
+                            "${loc.email_in_use}.",
+                            style: TextStyle(
+                              color: colorScheme.error
+                            )
+                          ),
+                
+                        SizedBox(height: 15),
+                
+                        Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          obscureText: obscurePassword,
+                          controller: passwordController,
+                          decoration: InputDecoration(
+                            hintText: loc.enter_password,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  obscurePassword = !obscurePassword;
+                                });
+                              },
+                            ),
+                            filled: false,
+                            enabledBorder: passwordError ? errorBorder : normalBorder,
+                            focusedBorder: passwordError ? errorBorder : normalBorder
+                          ),
+                        ),
+                
+                        SizedBox(height: 15),
+                
+                        Text(loc.retype_password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextField(
+                          obscureText: obscurePassword,
+                          controller: passwordRepeatController,
+                          decoration: InputDecoration(
+                            hintText: loc.retype_password2,
+                            hintStyle: TextStyle(
+                              color: colorScheme.outline
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? MdiIcons.eyeOff : MdiIcons.eye
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  obscurePassword = !obscurePassword;
+                                });
+                              },
+                            ),
+                            filled: false,
+                            enabledBorder: passwordError ? errorBorder : normalBorder,
+                            focusedBorder: passwordError ? errorBorder : normalBorder
+                          ),
+                        ),
+                
+                        if (passwordError) 
+                
+                          Row(
+                            spacing: 3,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(MdiIcons.alertCircleOutline, color: colorScheme.error,),
+                              Text(
+                                loc.diff_passwords,
+                                style: TextStyle(color: colorScheme.error)
+                              ),
+                            ],
+                          ),
+                          
+                        SizedBox(height: 40),
+                          
+                        Center(
+                          child: Column(
+                            children: [
+                              FilledButton(
+                                onPressed: isLoading ? null : () async {
+                                  if (passwordController.text != passwordRepeatController.text) {
+                                    setState(() {
+                                      passwordError = true;
+                                    });
+                                    return;
+                                  }
+
+                                  await signup();
+                                },
+        
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
+                                  child: isLoading
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            colorScheme.onPrimary
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        loc.signup, 
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: colorScheme.onPrimary
+                                        )
+                                      ),
+                                )
+                              ),
+        
+                              SizedBox(height: 30),
+        
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${loc.have_account}? "
+                                  ),
+                                  if (!isLoading)
+                                    PressableText(
+                                      text: loc.login, 
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const LoginPage()
+                                          )
+                                        );
+                                      }, 
+                                      style: TextStyle(
+                                        color: colorScheme.primary
+                                      ) 
+                                    ),
+                                ],
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       )
     );
   }
@@ -291,6 +306,7 @@ class _RegisterPageState extends State<RegisterPage> {
   );
 
   signup() async {
+    setState(() => isLoading = true);
 
     try {
       final user = await _auth.createUserWithEmailAndPassword(emailController.text, passwordController.text);
@@ -307,7 +323,6 @@ class _RegisterPageState extends State<RegisterPage> {
     } on FirebaseAuthException catch(e) {
       log("singup error: ${e.code}");
 
-      // Detect if user already exists
       if (e.code == 'email-already-in-use') {
         setState(() => userExists = true);
       } else {
@@ -317,7 +332,8 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       log("Unexpected signup error: $e");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
-    
   }
 }

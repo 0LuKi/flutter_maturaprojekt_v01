@@ -160,4 +160,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get calving => 'Kalbung';
+
+  @override
+  String get welcome => 'Willkommen';
 }
