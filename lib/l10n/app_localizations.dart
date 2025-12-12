@@ -424,6 +424,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No tasks found'**
   String get no_tasks_found;
+
+  /// No description provided for @delete_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Task'**
+  String get delete_task;
+
+  /// No description provided for @delete_task_conf.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to delete this task'**
+  String get delete_task_conf;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

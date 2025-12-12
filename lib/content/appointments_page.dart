@@ -129,14 +129,59 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                             return _buildEmptyState(colorScheme);
                           }
 
-                          final tasks = snapshot.data!;
+                          final allTasks = snapshot.data!;
+                          // Filter tasks into two lists
+                          final incompleteTasks = allTasks.where((t) => !t.isCompleted).toList();
+                          final completedTasks = allTasks.where((t) => t.isCompleted).toList();
 
-                          return ListView.builder(
-                            itemCount: tasks.length,
+                          if (incompleteTasks.isEmpty && completedTasks.isEmpty) {
+                            return _buildEmptyState(colorScheme);
+                          }
+
+                          return ListView(
                             padding: const EdgeInsets.only(bottom: 80),
-                            itemBuilder: (context, index) {
-                              return _buildTaskCard(tasks[index], colorScheme);
-                            },
+                            children: [
+                              // 1. Unchecked Tasks
+                              ...incompleteTasks.map((t) => _buildTaskCard(t, colorScheme)),
+
+                              // Optional "All Done" message if no incomplete tasks exist but completed ones do
+                              if (incompleteTasks.isEmpty && completedTasks.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(
+                                    child: Text(
+                                      "Alles erledigt! 🎉", 
+                                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)
+                                    ),
+                                  ),
+                                ),
+
+                              // 2. Divider & Header for Completed Tasks
+                              if (completedTasks.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        "Erledigt (${completedTasks.length})",
+                                        style: TextStyle(
+                                          color: colorScheme.outline,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                // 3. Completed Tasks
+                                ...completedTasks.map((t) => _buildTaskCard(t, colorScheme)),
+                              ],
+                            ],
                           );
                         },
                       ),
@@ -165,7 +210,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           Icon(Icons.event_available, size: 64, color: colorScheme.outline.withOpacity(0.5)),
           const SizedBox(height: 16),
           Text(
-            "Keine offenen Aufgaben",
+            "Keine Aufgaben",
             style: TextStyle(color: colorScheme.outline, fontSize: 16),
           ),
         ],
@@ -175,61 +220,108 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
   Widget _buildTaskCard(FarmTask task, ColorScheme colorScheme) {
     final isOverdue = task.dueDate.isBefore(DateTime.now()) && !task.isCompleted;
+    final isCompleted = task.isCompleted;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: isOverdue ? Border.all(color: colorScheme.error.withOpacity(0.5)) : null,
+    // Dim the completed tasks slightly
+    final cardOpacity = isCompleted ? 0.6 : 1.0;
+
+    return Opacity(
+      opacity: cardOpacity,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: isOverdue ? Border.all(color: colorScheme.error.withOpacity(0.5)) : null,
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getCategoryIcon(task.category), 
+              color: isOverdue ? colorScheme.error : (isCompleted ? colorScheme.secondary : colorScheme.primary),
+              size: 20,
+            ),
+          ),
+          title: Text(
+            task.title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              decoration: isCompleted ? TextDecoration.lineThrough : null,
+              color: isCompleted ? colorScheme.onSurface.withOpacity(0.6) : colorScheme.onSurface,
+            ),
+          ),
+          subtitle: Row(
+            children: [
+              if (isOverdue) 
+                Padding(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: Icon(Icons.warning_amber_rounded, size: 14, color: colorScheme.error),
+                ),
+              Text(
+                DateFormat('dd.MM.yyyy HH:mm').format(task.dueDate),
+                style: TextStyle(
+                  color: isOverdue ? colorScheme.error : colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: task.isCompleted,
+                activeColor: colorScheme.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                onChanged: (val) {
+                  _dbService!.toggleTaskStatus(task.id, task.isCompleted);
+                },
+              ),
+
+              IconButton(
+                icon: Icon(Icons.delete_outline),
+                color: colorScheme.error.withOpacity(0.7),
+                onPressed: () {
+                  _confirmDeleteTask(context, task);
+                }
+              )
+            ],
+          ),
+        ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _getCategoryIcon(task.category), 
-            color: isOverdue ? colorScheme.error : colorScheme.primary,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          task.title,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-            color: task.isCompleted ? colorScheme.onSurface.withOpacity(0.5) : colorScheme.onSurface,
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            if (isOverdue) 
-              Padding(
-                padding: const EdgeInsets.only(right: 6.0),
-                child: Icon(Icons.warning_amber_rounded, size: 14, color: colorScheme.error),
-              ),
-            Text(
-              DateFormat('dd.MM.yyyy HH:mm').format(task.dueDate),
-              style: TextStyle(
-                color: isOverdue ? colorScheme.error : colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
+    );
+  }
+
+  void _confirmDeleteTask(BuildContext context, FarmTask task) {
+    final loc = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(loc!.delete_task),
+          content: Text(loc.delete_task_conf),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(loc.cancel),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); 
+                await _dbService?.deleteTask(task.id);
+              },
+              child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
             ),
           ],
-        ),
-        trailing: Checkbox(
-          value: task.isCompleted,
-          activeColor: colorScheme.primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          onChanged: (val) {
-            _dbService!.toggleTaskStatus(task.id, task.isCompleted);
-          },
-        ),
-      ),
+        );
+      },
     );
   }
 

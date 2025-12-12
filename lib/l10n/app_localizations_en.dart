@@ -172,4 +172,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no_tasks_found => 'No tasks found';
+
+  @override
+  String get delete_task => 'Delete Task';
+
+  @override
+  String get delete_task_conf => 'Do you really want to delete this task';
 }

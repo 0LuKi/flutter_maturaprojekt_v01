@@ -54,7 +54,6 @@
   "add_task": "Add Task",
   "task_title_hint": "Title (e.g. Call vet)",
   "no_tasks_found": "No tasks found",
-  "error": "Error",
-  "cancel": "Cancel",
-  "save": "Save"
+  "delete_task": "Delete Task",
+  "delete_task_conf": "Do you really want to delete this task"
 }

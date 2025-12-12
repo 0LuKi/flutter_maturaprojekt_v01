@@ -53,5 +53,7 @@
   "welcome": "Willkommen",
   "add_task": "Aufgabe hinzufügen",
   "task_title_hint": "Titel (z.B. Tierarzt anrufen)",
-  "no_tasks_found": "Keine Aufgaben gefunden"
+  "no_tasks_found": "Keine Aufgaben gefunden",
+  "delete_task": "Aufgabe löschen",
+  "delete_task_conf": "Möchten Sie diese Aufgabe wirklich löschen"
 }
