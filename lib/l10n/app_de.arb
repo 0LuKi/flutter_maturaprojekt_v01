@@ -51,4 +51,7 @@
   "health": "Gesundheit",
   "calving": "Kalbung",
   "welcome": "Willkommen",
+  "add_task": "Aufgabe hinzufügen",
+  "task_title_hint": "Titel (z.B. Tierarzt anrufen)",
+  "no_tasks_found": "Keine Aufgaben gefunden"
 }

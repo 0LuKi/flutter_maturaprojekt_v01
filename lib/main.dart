@@ -11,13 +11,16 @@ import 'package:flutter_maturaprojekt_v01/utilities/open_menu.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
+import 'firebase_options.dart'; // This file contains the web keys
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // FIX: This line MUST have 'options' to work on Web
   await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
   try {
@@ -42,7 +45,7 @@ class MyApp extends StatelessWidget {
           filledButtonTheme: AppTheme.filledButtonTheme(
             ColorsLight.primary,
             Colors.white,
-          ), // NICHT VERGESSEN hier Farbe für Buttons auch ändern
+          ), 
         );
         final ThemeData baseDark = AppTheme.darkTheme;
 
@@ -73,15 +76,19 @@ class MyApp extends StatelessWidget {
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
+              // Waiting state
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(child: CircularProgressIndicator()),
                 );
               }
 
+              // Logged in
               if (snapshot.hasData) {
                 return const HomePage();
-              } else {
+              } 
+              // Not logged in
+              else {
                 return const LoginPage();
               }
             },
@@ -102,8 +109,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int currentPageIndex = 0;
 
-  final pages = [DashboardPage(), LivestockPage(), AppointmentsPage()];
-
   void onTabChanged(int index) {
     setState(() {
       currentPageIndex = index;
@@ -112,16 +117,92 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // Check screen width to determine layout mode
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 800;
+    final isWide = screenWidth > 1200;
+
+    final pages = [
+      DashboardPage(changeTab: onTabChanged),
+      const LivestockPage(),
+      const AppointmentsPage(),
+    ];
+
     return Scaffold(
+      // On desktop, use a slightly distinct background color to create a "sheet" effect for the content
+      backgroundColor: isDesktop ? colorScheme.surfaceContainerHigh : colorScheme.surface,
       endDrawer: OpenMenu(
         currentIndex: currentPageIndex,
         onIndexChanged: onTabChanged,
       ),
-      body: IndexedStack(index: currentPageIndex, children: pages),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: currentPageIndex,
-        onIndexChanged: onTabChanged,
-      ),
+      body: isDesktop
+          ? Row(
+              children: [
+                // Navigation Rail for Desktop/Tablet
+                NavigationRail(
+                  backgroundColor: colorScheme.surface,
+                  selectedIndex: currentPageIndex,
+                  onDestinationSelected: onTabChanged,
+                  extended: isWide,
+                  minExtendedWidth: 200,
+                  labelType: isWide ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.dashboard_outlined),
+                      selectedIcon: const Icon(Icons.dashboard),
+                      label: Text(loc?.dashboard ?? 'Dashboard'),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.pets_outlined),
+                      selectedIcon: const Icon(Icons.pets),
+                      label: Text(loc?.livestock ?? 'Herde'),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.calendar_today_outlined),
+                      selectedIcon: const Icon(Icons.calendar_today),
+                      label: Text(loc?.appointments ?? 'Aufgaben'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                // Content Area
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 1000),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias, // Clips the inner Scaffolds to the rounded corners
+                        child: IndexedStack(index: currentPageIndex, children: pages),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(index: currentPageIndex, children: pages), // Mobile Layout
+      
+      // Bottom Navigation Bar only for Mobile
+      bottomNavigationBar: isDesktop
+          ? null
+          : BottomNavBar(
+              currentIndex: currentPageIndex,
+              onIndexChanged: onTabChanged,
+            ),
     );
   }
 }

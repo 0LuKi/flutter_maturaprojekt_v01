@@ -28,104 +28,117 @@ class _EmailSentState extends State<EmailSent> {
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context, 
-              MaterialPageRoute(builder: (context) => ForgotPassword()), 
+              MaterialPageRoute(builder: (context) => const ForgotPassword()), 
               (route) => false
             );
           }, 
-          icon: Icon(Icons.arrow_back_rounded)
+          icon: const Icon(Icons.arrow_back_rounded)
         ),
 
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Column(
-              spacing: 5,
-              children: [
-                SizedBox(height: 80),
-                Text(
-                  loc.email_sent,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 30
-                  ),
-                ),
-                SizedBox(height: 30),
-                Text.rich(
-                  TextSpan(
-                    text: loc.email_sent_text1,
-                    style : TextStyle(fontSize: 15),
-                    children: [
-                      TextSpan(
-                        text: widget.email,
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold
-                        )
-                      ),
-                      TextSpan(
-                        text: loc.email_sent_text2
-                      )
-                    ]
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                SizedBox(height: 30),
-
-                Column(
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    FilledButton(
-                      onPressed: () async {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LoginPage()
+                    const SizedBox(height: 40),
+                    Center(
+                      child: Text(
+                        loc.email_sent,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 30
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Text.rich(
+                      TextSpan(
+                        text: loc.email_sent_text1,
+                        style : const TextStyle(fontSize: 15),
+                        children: [
+                          TextSpan(
+                            text: " ${widget.email} ",
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold
+                            )
                           ),
-                          (route) => false
-                        );
-                      },
-                    
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 10),
-                        child: Text(
-                          loc.back_to_login, 
+                          TextSpan(
+                            text: loc.email_sent_text2
+                          )
+                        ]
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () async {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage()
+                                ),
+                                (route) => false
+                              );
+                            },
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                            ),
+                            child: Text(
+                              loc.back_to_login, 
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: colorScheme.onPrimary
+                              )
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "${loc.email_not_correct}? "
+                        ),
+                        PressableText(
+                          text: loc.click_to_edit, 
+                          onTap: () {
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPassword()
+                              )
+                            );
+                          }, 
                           style: TextStyle(
-                            fontSize: 15,
-                            color: colorScheme.onPrimary
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold
                           )
                         ),
-                      )
+                      ],
                     ),
                   ],
                 ),
-
-                SizedBox(height: 10),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      loc.email_not_correct + "? "
-                    ),
-                    PressableText(
-                      text: loc.click_to_edit, 
-                      onTap: () {
-                        Navigator.push(
-                          context, 
-                          MaterialPageRoute(
-                            builder: (context) => ForgotPassword()
-                          )
-                        );
-                      }, 
-                      style: TextStyle(
-                        color: colorScheme.primary
-                      )
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),

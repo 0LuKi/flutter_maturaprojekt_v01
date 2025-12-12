@@ -58,42 +58,44 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
               child: SafeArea(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-            
-                  spacing: 30,
-            
                   children: [
-                          
-                    Image(
-                      image: AssetImage('assets/images/FarmManager_LOGO3.png'),
-                          
+                    // Logo
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 150),
+                      child: const Image(
+                        image: AssetImage('assets/images/FarmManager_LOGO3.png'),
+                        fit: BoxFit.contain,
+                      ),
                     ),
+                    
+                    const SizedBox(height: 30),
                 
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 5,
-                
                       children: [
-                
                         Text(
                           loc.please_login,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold
-                          )
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                 
-                        SizedBox(height: 8),
+                        const SizedBox(height: 20),
                 
-                        Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.email, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: emailController,
                           onChanged: (_) {
@@ -109,10 +111,11 @@ class _LoginPageState extends State<LoginPage> {
                             focusedBorder: wrongCred ? errorBorder : normalBorder
                           ),
                         ),
+                        
+                        const SizedBox(height: 15),
                 
-                        SizedBox(height: 15),
-                
-                        Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.password, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           obscureText: obscurePassword,
                           controller: passwordController,
@@ -139,6 +142,9 @@ class _LoginPageState extends State<LoginPage> {
                             focusedBorder: wrongCred ? errorBorder : normalBorder
                           ),
                         ),
+                        
+                        const SizedBox(height: 8),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -154,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ForgotPassword()
+                                    builder: (context) => const ForgotPassword()
                                   )
                                 );
                               }, 
@@ -165,66 +171,68 @@ class _LoginPageState extends State<LoginPage> {
                           ],
                         ),
             
-                        SizedBox(height: 30),
+                        const SizedBox(height: 30),
                           
-                        Center(
-                          child: Column(
-                            children: [
-                              FilledButton(
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
                                 onPressed: isLoading ? null : () async {
                                   await login();
                                 },
-                              
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
-                                  child: isLoading
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                                ),
+                                child: isLoading
                                   ? SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        colorScheme.onPrimary
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          colorScheme.onPrimary
+                                        ),
                                       ),
-                                    )
-                                  ) 
+                                    ) 
                                   : Text(
-                                    loc.login, 
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: colorScheme.onPrimary
-                                    )
-                                  ),
-                                )
-                              ),
-            
-                              SizedBox(height: 30),
-                              
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "${loc.dont_have_account}? "
-                                  ),
-                                  if (!isLoading)
-                                    PressableText(
-                                      text: loc.signup, 
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const RegisterPage()
-                                          )
-                                        );
-                                      }, 
+                                      loc.login, 
                                       style: TextStyle(
-                                        color: colorScheme.primary,
-                                      ) 
+                                        fontSize: 16,
+                                        color: colorScheme.onPrimary
+                                      )
                                     ),
-                                ],
-                              )
-                            ],
-                          ),
+                              ),
+                            ),
+            
+                            const SizedBox(height: 30),
+                            
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${loc.dont_have_account}? "
+                                ),
+                                if (!isLoading)
+                                  PressableText(
+                                    text: loc.signup, 
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const RegisterPage()
+                                        )
+                                      );
+                                    }, 
+                                    style: TextStyle(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.bold
+                                    ) 
+                                  ),
+                              ],
+                            )
+                          ],
                         )
                       ],
                     )
@@ -232,7 +240,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-          ],
+          ),
         ),
       )
     );

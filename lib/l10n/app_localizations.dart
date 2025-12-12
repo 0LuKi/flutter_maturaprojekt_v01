@@ -406,6 +406,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome'**
   String get welcome;
+
+  /// No description provided for @add_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Task'**
+  String get add_task;
+
+  /// No description provided for @task_title_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (e.g. Call vet)'**
+  String get task_title_hint;
+
+  /// No description provided for @no_tasks_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks found'**
+  String get no_tasks_found;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

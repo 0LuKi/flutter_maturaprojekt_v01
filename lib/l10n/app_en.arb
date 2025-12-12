@@ -50,5 +50,11 @@
   "milk": "Milk",
   "health": "Health",
   "calving": "calving",
-  "welcome": "Welcome"
+  "welcome": "Welcome",
+  "add_task": "Add Task",
+  "task_title_hint": "Title (e.g. Call vet)",
+  "no_tasks_found": "No tasks found",
+  "error": "Error",
+  "cancel": "Cancel",
+  "save": "Save"
 }

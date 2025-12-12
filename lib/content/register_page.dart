@@ -71,42 +71,44 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
               child: SafeArea(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-        
-                  spacing: 30,
-        
                   children: [
-                          
-                    Image(
-                      image: AssetImage('assets/images/FarmManager_LOGO3.png'),
-                          
+                    // Logo
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 150),
+                      child: const Image(
+                        image: AssetImage('assets/images/FarmManager_LOGO3.png'),
+                        fit: BoxFit.contain,
+                      ),
                     ),
+                    
+                    const SizedBox(height: 30),
                 
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 5,
-                
                       children: [
-                
                         Text(
                           loc.signup_create,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold
-                          )
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                 
-                        SizedBox(height: 8),
+                        const SizedBox(height: 20),
                 
-                        Text(loc.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: nameController,
                           decoration: InputDecoration(
@@ -124,9 +126,10 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         
-                        SizedBox(height: 15),
+                        const SizedBox(height: 15),
                 
-                        Text(loc.email, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.email, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: emailController,
                           onChanged: (_) {
@@ -143,16 +146,20 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         if (userExists)
-                          Text(
-                            "${loc.email_in_use}.",
-                            style: TextStyle(
-                              color: colorScheme.error
-                            )
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              "${loc.email_in_use}.",
+                              style: TextStyle(
+                                color: colorScheme.error
+                              )
+                            ),
                           ),
                 
-                        SizedBox(height: 15),
+                        const SizedBox(height: 15),
                 
-                        Text(loc.password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.password, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           obscureText: obscurePassword,
                           controller: passwordController,
@@ -177,9 +184,10 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                 
-                        SizedBox(height: 15),
+                        const SizedBox(height: 15),
                 
-                        Text(loc.retype_password, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(loc.retype_password, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
                         TextField(
                           obscureText: obscurePassword,
                           controller: passwordRepeatController,
@@ -205,26 +213,27 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                 
                         if (passwordError) 
-                
-                          Row(
-                            spacing: 3,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(MdiIcons.alertCircleOutline, color: colorScheme.error,),
-                              Text(
-                                loc.diff_passwords,
-                                style: TextStyle(color: colorScheme.error)
-                              ),
-                            ],
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              children: [
+                                Icon(MdiIcons.alertCircleOutline, color: colorScheme.error, size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  loc.diff_passwords,
+                                  style: TextStyle(color: colorScheme.error)
+                                ),
+                              ],
+                            ),
                           ),
                           
-                        SizedBox(height: 40),
+                        const SizedBox(height: 40),
                           
-                        Center(
-                          child: Column(
-                            children: [
-                              FilledButton(
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
                                 onPressed: isLoading ? null : () async {
                                   if (passwordController.text != passwordRepeatController.text) {
                                     setState(() {
@@ -235,57 +244,58 @@ class _RegisterPageState extends State<RegisterPage> {
 
                                   await signup();
                                 },
-        
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 30),
-                                  child: isLoading
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            colorScheme.onPrimary
-                                          ),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                                ),
+                                child: isLoading
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          colorScheme.onPrimary
                                         ),
-                                      )
-                                    : Text(
-                                        loc.signup, 
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: colorScheme.onPrimary
-                                        )
                                       ),
-                                )
-                              ),
-        
-                              SizedBox(height: 30),
-        
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "${loc.have_account}? "
-                                  ),
-                                  if (!isLoading)
-                                    PressableText(
-                                      text: loc.login, 
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const LoginPage()
-                                          )
-                                        );
-                                      }, 
+                                    )
+                                  : Text(
+                                      loc.signup, 
                                       style: TextStyle(
-                                        color: colorScheme.primary
-                                      ) 
+                                        fontSize: 16,
+                                        color: colorScheme.onPrimary
+                                      )
                                     ),
-                                ],
-                              )
-                            ],
-                          ),
+                              ),
+                            ),
+        
+                            const SizedBox(height: 30),
+        
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${loc.have_account}? "
+                                ),
+                                if (!isLoading)
+                                  PressableText(
+                                    text: loc.login, 
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const LoginPage()
+                                        )
+                                      );
+                                    }, 
+                                    style: TextStyle(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.bold
+                                    ) 
+                                  ),
+                              ],
+                            )
+                          ],
                         )
                       ],
                     )
@@ -293,7 +303,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
             ),
-          ],
+          ),
         ),
       )
     );

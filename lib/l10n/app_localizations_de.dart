@@ -163,4 +163,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get welcome => 'Willkommen';
+
+  @override
+  String get add_task => 'Aufgabe hinzufügen';
+
+  @override
+  String get task_title_hint => 'Titel (z.B. Tierarzt anrufen)';
+
+  @override
+  String get no_tasks_found => 'Keine Aufgaben gefunden';
 }

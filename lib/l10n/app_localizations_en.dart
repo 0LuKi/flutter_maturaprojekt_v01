@@ -163,4 +163,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcome => 'Welcome';
+
+  @override
+  String get add_task => 'Add Task';
+
+  @override
+  String get task_title_hint => 'Title (e.g. Call vet)';
+
+  @override
+  String get no_tasks_found => 'No tasks found';
 }
