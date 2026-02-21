@@ -1,0 +1,69 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class Lactation {
+  final String id;
+  final String cowId;
+  final DateTime calvingDate;
+  final DateTime plannedDryOffDate;
+
+  Lactation({
+    required this.id,
+    required this.cowId,
+    required this.calvingDate,
+    required this.plannedDryOffDate,
+  });
+
+  factory Lactation.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Lactation(
+      id: doc.id,
+      cowId: data['cowId'] ?? '',
+      calvingDate: (data['calvingDate'] as Timestamp).toDate(),
+      plannedDryOffDate: (data['plannedDryOffDate'] as Timestamp).toDate(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'cowId': cowId,
+      'calvingDate': Timestamp.fromDate(calvingDate),
+      'plannedDryOffDate': Timestamp.fromDate(plannedDryOffDate),
+    };
+  }
+}
+
+class Event {
+  final String id;
+  final String cowId;
+  final String type; // Brunst, Besamung, Krankheit, etc.
+  final DateTime date;
+  final String note;
+
+  Event({
+    required this.id,
+    required this.cowId,
+    required this.type,
+    required this.date,
+    this.note = '',
+  });
+
+  factory Event.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Event(
+      id: doc.id,
+      cowId: data['cowId'] ?? '',
+      type: data['type'] ?? '',
+      date: (data['date'] as Timestamp).toDate(),
+      note: data['note'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'cowId': cowId,
+      'type': type,
+      'date': Timestamp.fromDate(date),
+      'note': note,
+    };
+  }
+}

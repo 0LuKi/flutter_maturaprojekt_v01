@@ -187,14 +187,14 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                         clipBehavior: Clip.antiAlias, // Clips the inner Scaffolds to the rounded corners
-                        child: IndexedStack(index: currentPageIndex, children: pages),
+                        child: pages[currentPageIndex],
                       ),
                     ),
                   ),
                 ),
               ],
             )
-          : IndexedStack(index: currentPageIndex, children: pages), // Mobile Layout
+          : pages[currentPageIndex], // Mobile Layout
       
       // Bottom Navigation Bar only for Mobile
       bottomNavigationBar: isDesktop

@@ -51,10 +51,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get email_sent => 'E-Mail wurde gesendet';
 
   @override
-  String get email_sent_text1 => 'Eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts wurde an ';
+  String get email_sent_text1 =>
+      'Eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts wurde an ';
 
   @override
-  String get email_sent_text2 => ' gesendet. Bitte überprüfen Sie Ihr Postfach und folgen Sie dem Link, um ein neues Passwort zu erstellen.';
+  String get email_sent_text2 =>
+      ' gesendet. Bitte überprüfen Sie Ihr Postfach und folgen Sie dem Link, um ein neues Passwort zu erstellen.';
 
   @override
   String get back_to_login => 'Zurück zur Anmeldung';
@@ -69,7 +71,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get forgot_password => 'Passwort vergessen';
 
   @override
-  String get reset_passwd_text1 => 'Geben Sie die E-Mail-Adresse ein, die mit Ihrem Konto verknüpft ist. Wir senden Ihnen eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts.';
+  String get reset_passwd_text1 =>
+      'Geben Sie die E-Mail-Adresse ein, die mit Ihrem Konto verknüpft ist. Wir senden Ihnen eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts.';
 
   @override
   String get email => 'E-Mail';
@@ -178,4 +181,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get delete_task_conf => 'Möchten Sie diese Aufgabe wirklich löschen';
+
+  @override
+  String get brunstCalendar => "Brunstkalender";
 }

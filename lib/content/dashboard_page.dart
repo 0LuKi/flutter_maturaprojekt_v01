@@ -2,18 +2,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_maturaprojekt_v01/content/archive_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
-import 'package:flutter_maturaprojekt_v01/services/auth_service.dart'; // Import AuthService
+import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
 
 import '../services/database_service.dart';
 import '../models/animal.dart';
 import '../models/farm_task.dart';
-import 'livestock_page.dart'; 
-import 'cow_list.dart'; 
-import 'appointments_page.dart'; 
+import 'livestock_page.dart';
+import 'cow_list.dart';
+import 'appointments_page.dart';
+import 'document_scan_page.dart';
+import 'ear_tag_scanner_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final Function(int)? changeTab;
@@ -28,12 +31,12 @@ class _DashboardPageState extends State<DashboardPage> {
   DatabaseService? _dbService;
   String _userName = '';
   StreamSubscription<User?>? _authSubscription;
-  final AuthService _authService = AuthService(); // Instance for logout
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    
+
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       _dbService = DatabaseService(userId: currentUser.uid);
@@ -72,12 +75,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context); 
+    final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final isDesktop = MediaQuery.of(context).size.width > 800; // Check for desktop width
+    final isDesktop = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface, 
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: _dbService == null
             ? Center(
@@ -85,160 +88,119 @@ class _DashboardPageState extends State<DashboardPage> {
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.lock_outline, size: 64, color: colorScheme.outline),
+                          Icon(
+                            Icons.lock_outline,
+                            size: 64,
+                            color: colorScheme.outline,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             "Nicht angemeldet",
-                            style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          const Text("Bitte starten Sie die App neu oder loggen Sie sich ein."),
+                          const Text(
+                            "Bitte starten Sie die App neu oder loggen Sie sich ein.",
+                          ),
                           const SizedBox(height: 20),
                           FilledButton.icon(
                             onPressed: () {
-                               Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
-                            }, 
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginPage(),
+                                ),
+                              );
+                            },
                             icon: const Icon(Icons.login),
-                            label: const Text("Zum Login")
-                          )
+                            label: const Text("Zum Login"),
+                          ),
                         ],
                       )
                     : const CircularProgressIndicator(),
               )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- HEADER ---
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              DateFormat('EEEE, d. MMMM', 'de_DE').format(DateTime.now()),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat(
+                                    'EEEE, d. MMMM',
+                                    'de_DE',
+                                  ).format(DateTime.now()),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Hallo, $_userName',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Hallo, $_userName',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
+                            Container(
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest
+                                    .withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
                               ),
+                              child: isDesktop
+                                  ? IconButton(
+                                      onPressed: _signOut,
+                                      tooltip: loc?.sign_out ?? "Logout",
+                                      icon: const Icon(Icons.logout),
+                                      color: colorScheme.error,
+                                    )
+                                  : IconButton(
+                                      onPressed: () {
+                                        try {
+                                          Scaffold.of(context).openEndDrawer();
+                                        } catch (e) {
+                                          debugPrint("Kein Drawer gefunden");
+                                        }
+                                      },
+                                      tooltip: loc?.menu ?? "Menu",
+                                      icon: const Icon(Icons.menu_rounded),
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                             ),
                           ],
                         ),
-                        // Desktop: Show Logout / Mobile: Show Menu
-                        Container(
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: isDesktop 
-                            ? IconButton(
-                                onPressed: _signOut,
-                                tooltip: loc?.sign_out ?? "Logout",
-                                icon: const Icon(Icons.logout),
-                                color: colorScheme.error,
-                              )
-                            : IconButton(
-                                onPressed: () {
-                                  try {
-                                    Scaffold.of(context).openEndDrawer();
-                                  } catch (e) {
-                                    debugPrint("Kein Drawer gefunden");
-                                  }
-                                },
-                                tooltip: loc?.menu ?? "Menu",
-                                icon: const Icon(Icons.menu_rounded),
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                        )
+                        const SizedBox(height: 30),
+                        _buildBarChart(colorScheme),
+                        const SizedBox(height: 30),
+                        _buildStatusGrid(colorScheme),
+                        const SizedBox(height: 30),
+                        _buildUpcomingTasksList(),
+                        const SizedBox(height: 80),
                       ],
                     ),
-
-                    const SizedBox(height: 30),
-
-                    // --- CHART ---
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                           Row(
-                             children: [
-                               Icon(Icons.bar_chart_rounded, color: colorScheme.primary, size: 20),
-                               const SizedBox(width: 8),
-                               Text(
-                                "Wochenübersicht",
-                                style: TextStyle(
-                                  fontSize: 16, 
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onSurface
-                                ),
-                              ),
-                             ],
-                           ),
-                          const SizedBox(height: 24),
-                          AspectRatio(
-                            aspectRatio: 1.7,
-                            child: _buildBarChart(colorScheme),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // --- GRID ---
-                    Text(
-                      "Schnellzugriff",
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStatusGrid(colorScheme),
-
-                    const SizedBox(height: 30),
-
-                    // --- TASKS ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Nächste Aufgaben",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                             if (widget.changeTab != null) {
-                               widget.changeTab!(2);
-                             } else {
-                               Navigator.push(context, MaterialPageRoute(builder: (context) => const AppointmentsPage()));
-                             }
-                          },
-                          child: const Text("Alle"),
-                        )
-                      ],
-                    ),
-                    _buildUpcomingTasksList(),
-                    
-                    const SizedBox(height: 80), 
-                  ],
-                ),
+                  ),
+                ],
               ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -253,57 +215,83 @@ class _DashboardPageState extends State<DashboardPage> {
   // --- WIDGETS ---
 
   Widget _buildBarChart(ColorScheme colorScheme) {
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        maxY: 20,
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          show: true,
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 28,
-              interval: 5,
+    // WRAP THE CHART IN A SIZED BOX:
+    return SizedBox(
+      height: 300, // You can adjust this height to look good on your UI
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 20,
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            show: true,
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 28,
+                interval: 5,
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  const style = TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  );
+                  String text;
+                  switch (value.toInt()) {
+                    case 0:
+                      text = 'Mo';
+                      break;
+                    case 1:
+                      text = 'Di';
+                      break;
+                    case 2:
+                      text = 'Mi';
+                      break;
+                    case 3:
+                      text = 'Do';
+                      break;
+                    case 4:
+                      text = 'Fr';
+                      break;
+                    case 5:
+                      text = 'Sa';
+                      break;
+                    case 6:
+                      text = 'So';
+                      break;
+                    default:
+                      text = '';
+                  }
+                  return SideTitleWidget(
+                    meta: meta,
+                    space: 4.0,
+                    child: Text(text, style: style),
+                  );
+                },
+              ),
             ),
           ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (double value, TitleMeta meta) {
-                const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
-                String text;
-                switch (value.toInt()) {
-                  case 0: text = 'Mo'; break;
-                  case 1: text = 'Di'; break;
-                  case 2: text = 'Mi'; break;
-                  case 3: text = 'Do'; break;
-                  case 4: text = 'Fr'; break;
-                  case 5: text = 'Sa'; break;
-                  case 6: text = 'So'; break;
-                  default: text = '';
-                }
-                return SideTitleWidget(
-                  meta: meta, 
-                  space: 4.0,
-                  child: Text(text, style: style),
-                );
-              },
-            ),
-          ),
+          barGroups: [
+            _makeGroupData(0, 8, colorScheme),
+            _makeGroupData(1, 12, colorScheme),
+            _makeGroupData(2, 16, colorScheme),
+            _makeGroupData(3, 10, colorScheme),
+            _makeGroupData(4, 18, colorScheme),
+            _makeGroupData(5, 14, colorScheme),
+            _makeGroupData(6, 9, colorScheme),
+          ],
         ),
-        barGroups: [
-          _makeGroupData(0, 8, colorScheme),
-          _makeGroupData(1, 12, colorScheme),
-          _makeGroupData(2, 16, colorScheme),
-          _makeGroupData(3, 10, colorScheme),
-          _makeGroupData(4, 18, colorScheme),
-          _makeGroupData(5, 14, colorScheme),
-          _makeGroupData(6, 9, colorScheme),
-        ],
       ),
     );
   }
@@ -316,11 +304,11 @@ class _DashboardPageState extends State<DashboardPage> {
           toY: y,
           color: colors.primary,
           width: 16,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)), 
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
             toY: 20,
-            color: colors.surface.withOpacity(0.5), 
+            color: colors.surface.withOpacity(0.5),
           ),
         ),
       ],
@@ -348,9 +336,14 @@ class _DashboardPageState extends State<DashboardPage> {
               color: Colors.green,
               onTap: () {
                 if (widget.changeTab != null) {
-                  widget.changeTab!(1); 
+                  widget.changeTab!(1);
                 } else {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LivestockPage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LivestockPage(),
+                    ),
+                  );
                 }
               },
             );
@@ -359,7 +352,8 @@ class _DashboardPageState extends State<DashboardPage> {
         StreamBuilder<List<FarmTask>>(
           stream: _dbService!.getTasks(),
           builder: (context, snapshot) {
-            final count = snapshot.data?.where((t) => !t.isCompleted).length ?? 0;
+            final count =
+                snapshot.data?.where((t) => !t.isCompleted).length ?? 0;
             return _DashboardCard(
               title: 'Aufgaben',
               value: '$count Offen',
@@ -367,11 +361,16 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.task_alt,
               color: Colors.orange,
               onTap: () {
-                 if (widget.changeTab != null) {
-                   widget.changeTab!(2);
-                 } else {
-                   Navigator.push(context, MaterialPageRoute(builder: (context) => const AppointmentsPage()));
-                 }
+                if (widget.changeTab != null) {
+                  widget.changeTab!(2);
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AppointmentsPage(),
+                    ),
+                  );
+                }
               },
             );
           },
@@ -379,7 +378,8 @@ class _DashboardPageState extends State<DashboardPage> {
         StreamBuilder<List<Animal>>(
           stream: _dbService!.getAnimals(),
           builder: (context, snapshot) {
-            final calvesCount = snapshot.data?.where((a) => a.isCalf).length ?? 0;
+            final calvesCount =
+                snapshot.data?.where((a) => a.isCalf).length ?? 0;
             return _DashboardCard(
               title: 'Kälber',
               value: '$calvesCount',
@@ -388,9 +388,14 @@ class _DashboardPageState extends State<DashboardPage> {
               color: Colors.blue,
               onTap: () {
                 if (widget.changeTab != null) {
-                  widget.changeTab!(1); 
+                  widget.changeTab!(1);
                 } else {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LivestockPage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LivestockPage(),
+                    ),
+                  );
                 }
               },
             );
@@ -403,7 +408,32 @@ class _DashboardPageState extends State<DashboardPage> {
           icon: Icons.folder_open,
           color: Colors.purple,
           onTap: () {
-             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dokumentenverwaltung folgt in Kürze!')));
+            if (_dbService != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ArchivePage(dbService: _dbService!),
+                ),
+              );
+            }
+          },
+        ),
+        _DashboardCard(
+          title: 'Scanner',
+          value: '',
+          subtitle: 'Ohrmarke scannen',
+          icon: Icons.qr_code_scanner,
+          color: Colors.teal,
+          onTap: () {
+            if (_dbService != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      EarTagScannerPage(dbService: _dbService!),
+                ),
+              );
+            }
           },
         ),
       ],
@@ -412,86 +442,30 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildUpcomingTasksList() {
     return StreamBuilder<List<FarmTask>>(
-      stream: _dbService!.getTasks(),
+      stream: _dbService?.getTasks(), // Provide the stream
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: Colors.green),
-                SizedBox(width: 8),
-                Text("Keine offenen Aufgaben"),
-              ],
-            ),
+        // Provide the builder logic
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Text('No tasks available');
+        } else {
+          final tasks = snapshot.data!;
+          return ListView.builder(
+            shrinkWrap: true, // ADD THIS
+            physics: const NeverScrollableScrollPhysics(), // ADD THIS
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return ListTile(
+                title: Text(task.title),
+                subtitle: Text(task.dueDate.toString()),
+              );
+            },
           );
         }
-
-        final tasks = snapshot.data!
-            .where((t) => !t.isCompleted) 
-            .take(5) 
-            .toList();
-
-        if (tasks.isEmpty) {
-           return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: Colors.green),
-                SizedBox(width: 8),
-                Text("Alles erledigt!"),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: tasks.length,
-          itemBuilder: (context, index) {
-            final task = tasks[index];
-            return Card(
-              elevation: 0,
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              margin: const EdgeInsets.only(bottom: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.calendar_today_outlined, size: 20, color: Theme.of(context).colorScheme.primary)
-                ),
-                title: Text(
-                  task.title, 
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                    color: task.isCompleted ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.onSurface
-                  )
-                ),
-                subtitle: Text(DateFormat('dd.MM.yyyy').format(task.dueDate)),
-                trailing: Checkbox(
-                  value: task.isCompleted,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                  onChanged: (val) => _dbService!.toggleTaskStatus(task.id, task.isCompleted),
-                ),
-              ),
-            );
-          },
-        );
       },
     );
   }
@@ -499,7 +473,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _showQuickTaskDialog(BuildContext context) {
     final controller = TextEditingController();
     showDialog(
-      context: context, 
+      context: context,
       builder: (context) => AlertDialog(
         title: const Text('Schnelle Aufgabe'),
         content: TextField(
@@ -508,23 +482,28 @@ class _DashboardPageState extends State<DashboardPage> {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
           FilledButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
-                _dbService!.addTask(FarmTask(
-                  id: '', 
-                  title: controller.text, 
-                  dueDate: DateTime.now(),
-                  category: 'Allgemein'
-                ));
+                _dbService!.addTask(
+                  FarmTask(
+                    id: '',
+                    title: controller.text,
+                    dueDate: DateTime.now(),
+                    category: 'Allgemein',
+                  ),
+                );
               }
               Navigator.pop(context);
             },
-            child: const Text('Speichern')
+            child: const Text('Speichern'),
           ),
         ],
-      )
+      ),
     );
   }
 }
@@ -557,8 +536,8 @@ class _DashboardCard extends StatelessWidget {
             color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
-        ]
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -581,13 +560,28 @@ class _DashboardCard extends StatelessWidget {
                       ),
                       child: Icon(icon, color: color, size: 24),
                     ),
-                    Icon(Icons.arrow_outward, size: 16, color: Colors.grey[400])
+                    Icon(
+                      Icons.arrow_outward,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
                   ],
                 ),
                 const Spacer(),
-                Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600]), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),

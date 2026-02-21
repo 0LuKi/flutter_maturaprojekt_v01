@@ -14,6 +14,7 @@ class Animal {
   final int lactationNumber;
   final DateTime? lastInseminationDate;
   final DateTime? nextPregnancyCheckDate;
+  final int age;
 
   Animal({
     required this.id,
@@ -29,6 +30,7 @@ class Animal {
     this.lactationNumber = 0,
     this.lastInseminationDate,
     this.nextPregnancyCheckDate,
+    required this.age,
   });
 
   factory Animal.fromFirestore(DocumentSnapshot doc) {
@@ -43,8 +45,8 @@ class Animal {
       isCalf: data['isCalf'] ?? false,
       motherId: data['motherId'],
       fatherId: data['fatherId'], // NEU
-      weaningDate: data['weaningDate'] != null 
-          ? (data['weaningDate'] as Timestamp).toDate() 
+      weaningDate: data['weaningDate'] != null
+          ? (data['weaningDate'] as Timestamp).toDate()
           : null,
       lactationNumber: data['lactationNumber'] ?? 0,
       lastInseminationDate: data['lastInseminationDate'] != null
@@ -53,6 +55,7 @@ class Animal {
       nextPregnancyCheckDate: data['nextPregnancyCheckDate'] != null
           ? (data['nextPregnancyCheckDate'] as Timestamp).toDate()
           : null,
+      age: data['age'] ?? 0,
     );
   }
 
@@ -66,7 +69,9 @@ class Animal {
       'isCalf': isCalf,
       'motherId': motherId,
       'fatherId': fatherId, // NEU
-      'weaningDate': weaningDate != null ? Timestamp.fromDate(weaningDate!) : null,
+      'weaningDate': weaningDate != null
+          ? Timestamp.fromDate(weaningDate!)
+          : null,
       'lactationNumber': lactationNumber,
       'lastInseminationDate': lastInseminationDate != null
           ? Timestamp.fromDate(lastInseminationDate!)
@@ -74,6 +79,7 @@ class Animal {
       'nextPregnancyCheckDate': nextPregnancyCheckDate != null
           ? Timestamp.fromDate(nextPregnancyCheckDate!)
           : null,
+      'age': age,
     };
   }
 }

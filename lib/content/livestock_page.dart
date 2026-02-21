@@ -310,6 +310,7 @@ class _LivestockPageState extends State<LivestockPage> {
                       breed: breedCtrl.text,
                       gender: gender,
                       isCalf: isCalf,
+                      age: DateTime.now().difference(birthDate).inDays ~/ 365, // Calculate age in years
                       motherId: motherCtrl.text.isNotEmpty ? motherCtrl.text : null,
                       fatherId: fatherCtrl.text.isNotEmpty ? fatherCtrl.text : null,
                       weaningDate: isCalf ? weaningDate : null,

@@ -15,7 +15,7 @@ class OpenMenu extends StatefulWidget {
   const OpenMenu({
     super.key,
     required this.currentIndex,
-    required this.onIndexChanged
+    required this.onIndexChanged,
   });
 
   @override
@@ -57,14 +57,26 @@ class OpenMenuState extends State<OpenMenu> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: colorScheme.outlineVariant, width: 1),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant,
+                        width: 1,
+                      ),
                     ),
                     child: CircleAvatar(
                       radius: 28,
                       backgroundColor: colorScheme.primaryContainer,
-                      foregroundImage: (user?.photoURL != null) ? NetworkImage(user!.photoURL!) : null,
-                      child: (user?.photoURL == null) 
-                          ? Text(initials(), style: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold, fontSize: 18)) 
+                      foregroundImage: (user?.photoURL != null)
+                          ? NetworkImage(user!.photoURL!)
+                          : null,
+                      child: (user?.photoURL == null)
+                          ? Text(
+                              initials(),
+                              style: TextStyle(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            )
                           : null,
                     ),
                   ),
@@ -96,14 +108,16 @@ class OpenMenuState extends State<OpenMenu> {
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              child: Divider(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -113,23 +127,23 @@ class OpenMenuState extends State<OpenMenu> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
                   _buildModernNavItem(
-                    context, 
-                    icon: MdiIcons.homeAnalytics, 
-                    label: loc.dashboard, 
+                    context,
+                    icon: MdiIcons.homeAnalytics,
+                    label: loc.dashboard,
                     index: 0,
                     colorScheme: colorScheme,
                   ),
                   _buildModernNavItem(
-                    context, 
-                    icon: MdiIcons.cow, 
-                    label: loc.livestock, 
+                    context,
+                    icon: MdiIcons.cow,
+                    label: loc.livestock,
                     index: 1,
                     colorScheme: colorScheme,
                   ),
                   _buildModernNavItem(
-                    context, 
-                    icon: MdiIcons.calendar, 
-                    label: loc.appointments, 
+                    context,
+                    icon: MdiIcons.calendar,
+                    label: loc.appointments,
                     index: 2,
                     colorScheme: colorScheme,
                   ),
@@ -143,10 +157,18 @@ class OpenMenuState extends State<OpenMenu> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               child: Column(
                 children: [
-                   ListTile(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     leading: Icon(MdiIcons.logout, color: colorScheme.error),
-                    title: Text(loc.sign_out, style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w600)),
+                    title: Text(
+                      loc.sign_out,
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     onTap: () async {
                       await signout();
                     },
@@ -155,11 +177,18 @@ class OpenMenuState extends State<OpenMenu> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(MdiIcons.copyright, size: 12, color: colorScheme.outline),
+                      Icon(
+                        MdiIcons.copyright,
+                        size: 12,
+                        color: colorScheme.outline,
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        'FarmManager ${Globals.version}', 
-                        style: TextStyle(color: colorScheme.outline, fontSize: 12),
+                        'FarmManager ${Globals.version}',
+                        style: TextStyle(
+                          color: colorScheme.outline,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -171,25 +200,37 @@ class OpenMenuState extends State<OpenMenu> {
       ),
     );
   }
-  
-  Widget _buildModernNavItem(BuildContext context, {required IconData icon, required String label, required int index, required ColorScheme colorScheme}) {
+
+  Widget _buildModernNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required int index,
+    required ColorScheme colorScheme,
+  }) {
     final isSelected = widget.currentIndex == index;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        tileColor: isSelected ? colorScheme.secondaryContainer : Colors.transparent,
+        tileColor: isSelected
+            ? colorScheme.secondaryContainer
+            : Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         leading: Icon(
-          icon, 
-          color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+          icon,
+          color: isSelected
+              ? colorScheme.onSecondaryContainer
+              : colorScheme.onSurfaceVariant,
           size: 24,
         ),
         title: Text(
           label,
           style: TextStyle(
-            color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             fontSize: 15,
           ),

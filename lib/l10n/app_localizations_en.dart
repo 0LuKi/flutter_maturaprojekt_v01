@@ -178,4 +178,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get delete_task_conf => 'Do you really want to delete this task';
+  
+  @override
+  String get brunstCalendar => "Brunst Calendar";
 }
