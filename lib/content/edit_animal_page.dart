@@ -172,10 +172,17 @@ class _EditAnimalPageState extends State<EditAnimalPage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _gender,
-              decoration: _inputDeco('Geschlecht', Icons.wc),
-              items: ['Weiblich', 'Männlich']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
+              decoration: InputDecoration(
+                labelText: 'Geschlecht',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.wc),
+              ),
+              items: [
+                'Weiblich',
+                'Männlich',
+              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: (val) => setState(() => _gender = val!),
             ),
             const SizedBox(height: 20),

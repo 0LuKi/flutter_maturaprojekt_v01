@@ -14,8 +14,7 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-
+    final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -35,17 +34,23 @@ class BottomNavBar extends StatelessWidget {
           NavigationDestination(
             icon: Icon(MdiIcons.homeAnalytics),
             selectedIcon: Icon(MdiIcons.homeAnalytics),
-            label: loc.dashboard,
+            label: loc?.dashboard ?? 'Dashboard',
           ),
           NavigationDestination(
             icon: Icon(MdiIcons.cow),
             selectedIcon: Icon(MdiIcons.cow),
-            label: loc.livestock,
+            label: loc?.livestock ?? 'Herde',
           ),
           NavigationDestination(
             icon: Icon(MdiIcons.calendar),
             selectedIcon: Icon(MdiIcons.calendar),
-            label: loc.appointments,
+            label: loc?.appointments ?? 'Termine',
+          ),
+          // NEU: Futterverwaltungs-Tab
+          NavigationDestination(
+            icon: Icon(MdiIcons.grass),
+            selectedIcon: Icon(MdiIcons.grass),
+            label: 'Futter',
           ),
         ],
       ),

@@ -172,7 +172,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           const Duration(days: 365 * 2),
                         ),
                       );
-                      if (picked != null) setState(() => _selectedDate = picked);
+                      if (picked != null)
+                        setState(() => _selectedDate = picked);
                     },
                   ),
                 ),
@@ -187,7 +188,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         context: context,
                         initialTime: _selectedTime,
                       );
-                      if (picked != null) setState(() => _selectedTime = picked);
+                      if (picked != null)
+                        setState(() => _selectedTime = picked);
                     },
                   ),
                 ),
@@ -202,10 +204,30 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             Wrap(
               spacing: 8,
               children: [
-                _buildCategoryChip('General', 'Allgemein', Icons.calendar_today, colorScheme),
-                _buildCategoryChip('Vet', 'Tierarzt', Icons.medical_services, colorScheme),
-                _buildCategoryChip('Feed', 'Futter', Icons.restaurant, colorScheme),
-                _buildCategoryChip('Machine', 'Maschine', Icons.build, colorScheme),
+                _buildCategoryChip(
+                  'General',
+                  'Allgemein',
+                  Icons.calendar_today,
+                  colorScheme,
+                ),
+                _buildCategoryChip(
+                  'Vet',
+                  'Tierarzt',
+                  Icons.medical_services,
+                  colorScheme,
+                ),
+                _buildCategoryChip(
+                  'Feed',
+                  'Futter',
+                  Icons.restaurant,
+                  colorScheme,
+                ),
+                _buildCategoryChip(
+                  'Machine',
+                  'Maschine',
+                  Icons.build,
+                  colorScheme,
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -224,11 +246,26 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 prefixIcon: const Icon(Icons.notifications_active),
               ),
               items: const [
-                DropdownMenuItem(value: 'none', child: Text('Keine Benachrichtigung')),
-                DropdownMenuItem(value: 'same_day', child: Text('Am selben Tag um 08:00')),
-                DropdownMenuItem(value: 'one_day_before', child: Text('Einen Tag vorher um 08:00')),
-                DropdownMenuItem(value: 'one_hour_before', child: Text('Eine Stunde vorher')),
-                DropdownMenuItem(value: 'fixed_time', child: Text('Fixe Uhrzeit am selben Tag')),
+                DropdownMenuItem(
+                  value: 'none',
+                  child: Text('Keine Benachrichtigung'),
+                ),
+                DropdownMenuItem(
+                  value: 'same_day',
+                  child: Text('Am selben Tag um 08:00'),
+                ),
+                DropdownMenuItem(
+                  value: 'one_day_before',
+                  child: Text('Einen Tag vorher um 08:00'),
+                ),
+                DropdownMenuItem(
+                  value: 'one_hour_before',
+                  child: Text('Eine Stunde vorher'),
+                ),
+                DropdownMenuItem(
+                  value: 'fixed_time',
+                  child: Text('Fixe Uhrzeit am selben Tag'),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -321,7 +358,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       },
       labelStyle: TextStyle(
         fontSize: 12,
-        color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+        color: isSelected
+            ? colorScheme.onPrimaryContainer
+            : colorScheme.onSurface,
       ),
       selectedColor: colorScheme.primaryContainer,
       backgroundColor: colorScheme.surface,

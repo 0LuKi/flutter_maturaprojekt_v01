@@ -67,7 +67,8 @@ class _AddAnimalPageState extends State<AddAnimalPage> {
         calvingDetails: CalvingHistory(
           date: _birthDate,
           calvingCourse: 'Normal',
-          calfCount: '1', id: '',// ID wird in der Datenbank generiert //HIERHIERHIER
+          calfCount: '1',
+          id: '', // ID wird in der Datenbank generiert //HIERHIERHIER
         ),
       );
     } else {
@@ -156,7 +157,13 @@ class _AddAnimalPageState extends State<AddAnimalPage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _gender,
-              decoration: _inputDeco('Geschlecht', Icons.wc),
+              decoration: InputDecoration(
+                labelText: 'Geschlecht',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.wc),
+              ),
               items: [
                 'Weiblich',
                 'Männlich',

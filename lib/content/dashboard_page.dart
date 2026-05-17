@@ -14,11 +14,13 @@ import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
 import '../services/database_service.dart';
 import '../models/animal.dart';
 import '../models/farm_task.dart';
+import 'reproduction/reproduction_overview_page.dart'; // NEU: Import für Reproduktion
 import 'livestock_page.dart';
 import 'cow_list.dart';
 import 'appointments_page.dart';
 import 'document_scan_page.dart';
 import 'ear_tag_scanner_page.dart';
+import 'feed_overview_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final Function(int)? changeTab;
@@ -35,7 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
   StreamSubscription<User?>? _authSubscription;
   final AuthService _authService = AuthService();
 
-  // Nach: final AuthService _authService = AuthService();
   final TextEditingController _totalMilkController = TextEditingController();
   DateTime _selectedEntryDate = DateTime.now();
 
@@ -48,8 +49,6 @@ class _DashboardPageState extends State<DashboardPage> {
       _dbService = DatabaseService(userId: currentUser.uid);
       _userName = currentUser.displayName ?? 'Landwirt';
     }
-
-    
 
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (mounted) {
@@ -68,6 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _totalMilkController.dispose();
     super.dispose();
   }
 
@@ -199,9 +199,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           ],
                         ),
                         const SizedBox(height: 30),
-                        _buildRealMilkChart(colorScheme), // Das neue dynamische Chart
+                        _buildRealMilkChart(colorScheme),
                         const SizedBox(height: 10),
-                        _buildTotalMilkInput(colorScheme), // Das neue Eingabefeld
+                        _buildTotalMilkInput(colorScheme),
                         const SizedBox(height: 30),
                         _buildStatusGrid(colorScheme),
                         const SizedBox(height: 30),
@@ -225,40 +225,46 @@ class _DashboardPageState extends State<DashboardPage> {
   // --- WIDGETS ---
 
   Widget _buildRealMilkChart(ColorScheme colorScheme) {
-    // 1. Wir rufen beide Streams verschachtelt auf
     return StreamBuilder<List<MilkYield>>(
-      stream: _dbService?.getAllMilkYields(), // Einzelne Kühe
+      stream: _dbService?.getAllMilkYields(),
       builder: (context, cowSnapshot) {
         return StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _dbService?.getFarmMilkTotals(), // Hof-Gesamt (Tank)
+          stream: _dbService?.getFarmMilkTotals(),
           builder: (context, farmSnapshot) {
-            
             if (cowSnapshot.connectionState == ConnectionState.waiting ||
                 farmSnapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox(height: 380, child: Center(child: CircularProgressIndicator()));
+              return const SizedBox(
+                height: 380,
+                child: Center(child: CircularProgressIndicator()),
+              );
             }
 
             List<double> sums = List.filled(7, 0.0);
-            List<bool> hasIndividualData = List.filled(7, false); // Merkt sich, wo Einzeldaten sind
+            List<bool> hasIndividualData = List.filled(7, false);
 
-            // WICHTIG: Um alte Daten herauszufiltern, nehmen wir nur die letzten 7 Tage
-            DateTime startOfToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+            DateTime startOfToday = DateTime(
+              DateTime.now().year,
+              DateTime.now().month,
+              DateTime.now().day,
+            );
 
-            // 2. Zuerst die Kuh-Daten auswerten (Priorität 1)
             if (cowSnapshot.hasData) {
               for (var record in cowSnapshot.data!) {
-                DateTime recordDate = DateTime(record.date.year, record.date.month, record.date.day);
+                DateTime recordDate = DateTime(
+                  record.date.year,
+                  record.date.month,
+                  record.date.day,
+                );
                 int diff = startOfToday.difference(recordDate).inDays;
-                
-                if (diff >= 0 && diff < 7) { // Nur aktuelle Woche
-                  int dayIndex = record.date.weekday - 1; // 0=Mo, 6=So
+
+                if (diff >= 0 && diff < 7) {
+                  int dayIndex = record.date.weekday - 1;
                   sums[dayIndex] += record.amountLiters;
-                  hasIndividualData[dayIndex] = true; // Markieren, dass hier Kuh-Daten sind
+                  hasIndividualData[dayIndex] = true;
                 }
               }
             }
 
-            // 3. Dann die Tank-Daten auswerten (Priorität 2)
             if (farmSnapshot.hasData) {
               for (var data in farmSnapshot.data!) {
                 DateTime date = (data['date'] as Timestamp).toDate();
@@ -267,8 +273,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
                 if (diff >= 0 && diff < 7) {
                   int dayIndex = date.weekday - 1;
-                  
-                  // NUR einfügen, wenn an diesem Tag KEINE Kuh-Einzeldaten existieren
                   if (!hasIndividualData[dayIndex]) {
                     sums[dayIndex] = (data['totalAmount'] as num).toDouble();
                   }
@@ -276,7 +280,6 @@ class _DashboardPageState extends State<DashboardPage> {
               }
             }
 
-            // 4. Achsen-Maximum berechnen
             double maxVal = sums.reduce((a, b) => a > b ? a : b);
             double axisMax = ((maxVal + 40) / 20).ceil() * 20.0;
             if (axisMax < 100) axisMax = 100;
@@ -293,16 +296,22 @@ class _DashboardPageState extends State<DashboardPage> {
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipColor: (group) => Colors.white,
                       tooltipRoundedRadius: 12,
-                      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      tooltipPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       tooltipMargin: 8,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        // Zeigt im Tooltip an, aus welcher Quelle die Daten stammen
                         bool isHerd = hasIndividualData[group.x.toInt()];
                         String prefix = isHerd ? "Herde:" : "Tank:";
-                        
+
                         return BarTooltipItem(
                           '$prefix\n${rod.toY.toInt()} L',
-                          const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
+                          const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         );
                       },
                     ),
@@ -315,7 +324,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 45,
-                        getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 12)),
+                        getTitlesWidget: (value, meta) => Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -328,39 +340,50 @@ class _DashboardPageState extends State<DashboardPage> {
                             return SideTitleWidget(
                               axisSide: meta.axisSide,
                               space: 15,
-                              child: Text(days[value.toInt()], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              child: Text(
+                                days[value.toInt()],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
                             );
                           }
                           return const SizedBox.shrink();
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
-                  barGroups: List.generate(
-                    7,
-                    (index) {
-                      // Tank-Einträge bekommen eine leicht abweichende Farbe (Teal), Herde die primäre Farbe
-                      Color barColor = hasIndividualData[index] ? colorScheme.primary : Colors.blueAccent;
-                      return BarChartGroupData(
-                        x: index,
-                        barRods: [
-                          BarChartRodData(
-                            toY: sums[index],
-                            color: barColor,
-                            width: 18,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                            backDrawRodData: BackgroundBarChartRodData(
-                              show: true,
-                              toY: axisMax,
-                              color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
-                            ),
+                  barGroups: List.generate(7, (index) {
+                    Color barColor = hasIndividualData[index]
+                        ? colorScheme.primary
+                        : Colors.blueAccent;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: sums[index],
+                          color: barColor,
+                          width: 18,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: axisMax,
+                            color: colorScheme.surfaceContainerHighest
+                                .withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ),
             );
@@ -370,33 +393,14 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  BarChartGroupData _makeGroupData(int x, double y, ColorScheme colors, double max) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: y,
-          color: colors.primary,
-          width: 18,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-          backDrawRodData: BackgroundBarChartRodData(
-            show: true,
-            toY: max, // Benutzt jetzt den dynamischen Max-Wert
-            color: colors.surfaceContainerHighest.withOpacity(0.4),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildStatusGrid(ColorScheme colorScheme) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.4,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.15,
       children: [
         StreamBuilder<List<Animal>>(
           stream: _dbService!.getAnimals(),
@@ -409,16 +413,7 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: MdiIcons.cow,
               color: Colors.green,
               onTap: () {
-                if (widget.changeTab != null) {
-                  widget.changeTab!(1);
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LivestockPage(),
-                    ),
-                  );
-                }
+                if (widget.changeTab != null) widget.changeTab!(1);
               },
             );
           },
@@ -435,16 +430,7 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.task_alt,
               color: Colors.orange,
               onTap: () {
-                if (widget.changeTab != null) {
-                  widget.changeTab!(2);
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AppointmentsPage(),
-                    ),
-                  );
-                }
+                if (widget.changeTab != null) widget.changeTab!(2);
               },
             );
           },
@@ -461,18 +447,37 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: MdiIcons.babyCarriage,
               color: Colors.blue,
               onTap: () {
-                if (widget.changeTab != null) {
-                  widget.changeTab!(1);
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LivestockPage(),
-                    ),
-                  );
-                }
+                if (widget.changeTab != null) widget.changeTab!(1);
               },
             );
+          },
+        ),
+        _DashboardCard(
+          title: 'Futter',
+          value: 'Lager',
+          subtitle: 'Futterverwaltung',
+          icon: Icons.restaurant_outlined,
+          color: Colors.orangeAccent,
+          onTap: () {
+            if (widget.changeTab != null) widget.changeTab!(3);
+          },
+        ),
+        // NEU: Reproduktions-Card
+        _DashboardCard(
+          title: 'Reproduktion',
+          value: 'Kalender',
+          subtitle: 'Brunst & Kalbung',
+          icon: Icons.auto_graph,
+          color: Colors.pinkAccent,
+          onTap: () {
+            if (_dbService != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReproductionOverviewPage(),
+                ),
+              );
+            }
           },
         ),
         _DashboardCard(
@@ -494,7 +499,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         _DashboardCard(
           title: 'Scanner',
-          value: '',
+          value: 'Scanner',
           subtitle: 'Ohrmarke scannen',
           icon: Icons.qr_code_scanner,
           color: Colors.teal,
@@ -516,28 +521,44 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildUpcomingTasksList() {
     return StreamBuilder<List<FarmTask>>(
-      stream: _dbService?.getTasks(), // Provide the stream
+      stream: _dbService?.getTasks(),
       builder: (context, snapshot) {
-        // Provide the builder logic
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text('No tasks available');
+          return const Text('Keine anstehenden Aufgaben');
         } else {
-          final tasks = snapshot.data!;
-          return ListView.builder(
-            shrinkWrap: true, // ADD THIS
-            physics: const NeverScrollableScrollPhysics(), // ADD THIS
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return ListTile(
-                title: Text(task.title),
-                subtitle: Text(task.dueDate.toString()),
-              );
-            },
+          final tasks = snapshot.data!
+              .where((t) => !t.isCompleted)
+              .take(3)
+              .toList(); // Nur die nächsten 3
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Nächste Aufgaben",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...tasks.map((task) => Card(
+                    elevation: 0,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHigh
+                        .withOpacity(0.5),
+                    child: ListTile(
+                      title: Text(task.title),
+                      subtitle: Text(DateFormat('dd.MM.yyyy').format(task.dueDate)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        if (widget.changeTab != null) widget.changeTab!(2);
+                      },
+                    ),
+                  )),
+            ],
           );
         }
       },
@@ -562,13 +583,13 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           FilledButton(
             onPressed: () {
-              if (controller.text.isNotEmpty) {
+              if (controller.text.isNotEmpty && _dbService != null) {
                 _dbService!.addTask(
                   FarmTask(
                     id: '',
                     title: controller.text,
                     dueDate: DateTime.now(),
-                    category: 'Allgemein',
+                    category: 'General',
                   ),
                 );
               }
@@ -600,7 +621,10 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           Text(
             "Hof-Gesamtmenge erfassen",
-            style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 15),
           Row(
@@ -612,7 +636,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: InputDecoration(
                     labelText: "Liter (Tank)",
                     prefixIcon: const Icon(Icons.water_drop_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -625,7 +651,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     firstDate: DateTime(2024),
                     lastDate: DateTime.now(),
                   );
-                  if (picked != null) setState(() => _selectedEntryDate = picked);
+                  if (picked != null) {
+                    setState(() => _selectedEntryDate = picked);
+                  }
                 },
                 icon: const Icon(Icons.calendar_today),
               ),
@@ -641,7 +669,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   _dbService!.setFarmMilkTotal(_selectedEntryDate, amount);
                   _totalMilkController.clear();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Menge erfolgreich gespeichert!")),
+                    const SnackBar(
+                      content: Text("Menge erfolgreich gespeichert!"),
+                    ),
                   );
                 }
               },
@@ -653,10 +683,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-
 }
-
-
 
 class _DashboardCard extends StatelessWidget {
   final String title;
@@ -721,14 +748,18 @@ class _DashboardCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                Text(
                   subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -739,6 +770,4 @@ class _DashboardCard extends StatelessWidget {
       ),
     );
   }
-
-  
 }

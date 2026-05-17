@@ -97,31 +97,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
               const SizedBox(height: 20),
 
-              // --- SEARCH BAR ---
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: loc?.search ?? 'Suche...',
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                  ),
-                  onChanged: (val) {
-                    // Filter logic could go here
-                  },
-                ),
-              ),
-
               const SizedBox(height: 15),
 
               // --- CONTENT ---
@@ -228,7 +203,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         heroTag: 'appointments_fab',
         onPressed: _dbService == null
             ? null
@@ -241,7 +216,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               },
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Neue Aufgabe'),
       ),
     );
   }

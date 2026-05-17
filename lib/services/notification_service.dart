@@ -4,9 +4,17 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  NotificationService._();
+  // Privater Konstruktor
+  NotificationService._internal();
 
-  static final NotificationService instance = NotificationService._();
+  // Statische Instanz für das Singleton-Pattern
+  static final NotificationService _instance = NotificationService._internal();
+
+  // Öffentlicher Getter für 'instance' - Behebt die Fehler in main.dart und den Pages
+  static NotificationService get instance => _instance;
+
+  // Factory Konstruktor, falls man NotificationService() statt .instance aufruft
+  factory NotificationService() => _instance;
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -15,6 +23,7 @@ class NotificationService {
     if (kIsWeb) return;
 
     tz.initializeTimeZones();
+    // Wichtig: Die lokale Zeitzone muss gesetzt sein
     tz.setLocalLocation(tz.getLocation('Europe/Vienna'));
 
     const androidSettings = AndroidInitializationSettings(
@@ -25,6 +34,7 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
+
     const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
@@ -40,6 +50,8 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
+
+    // In neueren Android-Versionen getrennte Anfragen
     final androidGranted = await androidPlugin
         ?.requestNotificationsPermission();
     await androidPlugin?.requestExactAlarmsPermission();
@@ -68,10 +80,12 @@ class NotificationService {
     if (!hasPermission) return;
 
     final now = DateTime.now();
+    // Sicherstellen, dass das Datum nicht in der Vergangenheit liegt
     final safeScheduledDate = scheduledDate.isBefore(now)
         ? now.add(const Duration(seconds: 10))
         : scheduledDate;
 
+    // In Version 19.x wurde 'uiLocalNotificationDateInterpretation' entfernt!
     await _notifications.zonedSchedule(
       taskId.hashCode,
       'Termin Erinnerung',
@@ -87,13 +101,13 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      // 'androidScheduleMode' ist jetzt der entscheidende Parameter für Pünktlichkeit
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
   Future<void> cancelTaskNotification(String taskId) async {
     if (kIsWeb) return;
-
     await _notifications.cancel(taskId.hashCode);
   }
 }

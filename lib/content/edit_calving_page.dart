@@ -22,14 +22,19 @@ class EditCalvingPage extends StatefulWidget {
 
 class _EditCalvingPageState extends State<EditCalvingPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Formular-Felder
   late DateTime _selectedDate;
   late String _selectedCourse;
   late TextEditingController _calfCountCtrl;
   late TextEditingController _notesCtrl;
 
-  final List<String> _courses = ['Normal', 'Schwer', 'Kaiserschnitt', 'Fehlgeburt'];
+  final List<String> _courses = [
+    'Normal',
+    'Schwer',
+    'Kaiserschnitt',
+    'Fehlgeburt',
+  ];
 
   @override
   void initState() {
@@ -37,14 +42,17 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
     // Initialisierung mit bestehenden Daten (beim Bearbeiten) oder Standardwerten
     _selectedDate = widget.record?.date ?? DateTime.now();
     _selectedCourse = widget.record?.calvingCourse ?? 'Normal';
-    
+
     // Sicherstellen, dass der Kurs in der Liste existiert
     if (!_courses.contains(_selectedCourse)) {
       _selectedCourse = 'Normal';
     }
 
-    _calfCountCtrl = TextEditingController(text: widget.record?.calfCount ?? '1');
-    _notesCtrl = TextEditingController(); // Platz für spätere Erweiterungen (Notizen)
+    _calfCountCtrl = TextEditingController(
+      text: widget.record?.calfCount ?? '1',
+    );
+    _notesCtrl =
+        TextEditingController(); // Platz für spätere Erweiterungen (Notizen)
   }
 
   @override
@@ -82,7 +90,7 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
         // Bestehenden Eintrag aktualisieren
         widget.dbService.updateCalvingHistory(widget.animal.id, newRecord);
       }
-      
+
       Navigator.pop(context);
     }
   }
@@ -115,7 +123,7 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
             const SizedBox(height: 24),
 
             _buildSectionHeader('Datum & Verlauf', colorScheme),
-            
+
             // Datum Auswahl
             Card(
               elevation: 0,
@@ -135,7 +143,13 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
             // Geburtsverlauf Dropdown
             DropdownButtonFormField<String>(
               value: _selectedCourse,
-              decoration: _inputDecoration('Geburtsverlauf', Icons.speed),
+              decoration: InputDecoration(
+                labelText: 'Geburtsverlauf',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.speed),
+              ),
               items: _courses
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
@@ -144,15 +158,16 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
             const SizedBox(height: 24),
 
             _buildSectionHeader('Nachkommen', colorScheme),
-            
+
             // Anzahl Kälber
             TextFormField(
               controller: _calfCountCtrl,
               keyboardType: TextInputType.number,
               decoration: _inputDecoration('Anzahl Kälber', Icons.numbers),
-              validator: (val) => val == null || val.isEmpty ? 'Pflichtfeld' : null,
+              validator: (val) =>
+                  val == null || val.isEmpty ? 'Pflichtfeld' : null,
             ),
-            
+
             const SizedBox(height: 40),
 
             // Speichern Button
@@ -161,9 +176,13 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
               child: FilledButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save),
-                label: Text(isEdit ? 'Änderungen speichern' : 'Ereignis speichern'),
+                label: Text(
+                  isEdit ? 'Änderungen speichern' : 'Ereignis speichern',
+                ),
                 style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -178,12 +197,20 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eintrag löschen?'),
-        content: const Text('Möchten Sie dieses Kalbeereignis wirklich löschen?'),
+        content: const Text(
+          'Möchten Sie dieses Kalbeereignis wirklich löschen?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Abbrechen'),
+          ),
           FilledButton(
             onPressed: () {
-              widget.dbService.deleteCalvingHistory(widget.animal.id, widget.record!.id);
+              widget.dbService.deleteCalvingHistory(
+                widget.animal.id,
+                widget.record!.id,
+              );
               Navigator.pop(ctx); // Dialog zu
               Navigator.pop(context); // Seite zu
             },
@@ -208,8 +235,8 @@ class _EditCalvingPageState extends State<EditCalvingPage> {
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
-          fontSize: 12, 
-          fontWeight: FontWeight.bold, 
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
           color: colorScheme.primary,
           letterSpacing: 1.1,
         ),

@@ -36,12 +36,15 @@ class DatabaseService {
     required String title,
     required String category,
     required String storageUrl,
+    String? animalId, // NEU: Optionales Tier
   }) {
     return _db.collection('farm_documents').add({
       'title': title,
       'category': category,
       'storageUrl': storageUrl,
       'createdAt': FieldValue.serverTimestamp(),
+      if (animalId != null)
+        'animalId': animalId, // NEU: Nur speichern, wenn vorhanden
     });
   }
 
@@ -56,6 +59,20 @@ class DatabaseService {
           print(
             '🔥 FIREBASE ANTWORT: ${snapshot.docs.length} Dokumente gefunden!',
           );
+          return snapshot.docs.map((doc) {
+            return FarmDocument.fromFirestore(doc.data(), doc.id);
+          }).toList();
+        });
+  }
+
+  // NEU: Dokumente für ein spezielles Tier abrufen
+  Stream<List<FarmDocument>> getFarmDocumentsForAnimal(String animalId) {
+    return _db
+        .collection('farm_documents')
+        .where('animalId', isEqualTo: animalId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
           return snapshot.docs.map((doc) {
             return FarmDocument.fromFirestore(doc.data(), doc.id);
           }).toList();
@@ -387,28 +404,58 @@ class DatabaseService {
 
   // --- MILCH ---
   Future<void> updateMilkYield(String animalId, MilkYield record) {
-    return _db.collection('animals').doc(animalId).collection('milk_yields').doc(record.id).update(record.toMap());
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('milk_yields')
+        .doc(record.id)
+        .update(record.toMap());
   }
 
   Future<void> deleteMilkYield(String animalId, String recordId) {
-    return _db.collection('animals').doc(animalId).collection('milk_yields').doc(recordId).delete();
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('milk_yields')
+        .doc(recordId)
+        .delete();
   }
 
   // --- GESUNDHEIT (MEDICAL) ---
   Future<void> updateMedicalRecord(String animalId, MedicalRecord record) {
-    return _db.collection('animals').doc(animalId).collection('medical_records').doc(record.id).update(record.toMap());
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('medical_records')
+        .doc(record.id)
+        .update(record.toMap());
   }
 
   Future<void> deleteMedicalRecord(String animalId, String recordId) {
-    return _db.collection('animals').doc(animalId).collection('medical_records').doc(recordId).delete();
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('medical_records')
+        .doc(recordId)
+        .delete();
   }
 
   // --- KALBUNG ---
   Future<void> updateCalvingHistory(String animalId, CalvingHistory record) {
-    return _db.collection('animals').doc(animalId).collection('calving_history').doc(record.id).update(record.toMap());
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('calving_history')
+        .doc(record.id)
+        .update(record.toMap());
   }
 
   Future<void> deleteCalvingHistory(String animalId, String recordId) {
-    return _db.collection('animals').doc(animalId).collection('calving_history').doc(recordId).delete();
+    return _db
+        .collection('animals')
+        .doc(animalId)
+        .collection('calving_history')
+        .doc(recordId)
+        .delete();
   }
 }

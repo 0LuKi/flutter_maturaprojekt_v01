@@ -9,10 +9,13 @@ class Animal {
   final String gender;
   final bool isCalf;
   final String? motherId;
-  final String? fatherId; // NEU: Vater
+  final String? fatherId;
   final DateTime? weaningDate;
   final int lactationNumber;
+  final String reproStatus; // "offen", "belegt", "trächtig", "trocken"
   final DateTime? lastInseminationDate;
+  final DateTime? expectedCalvingDate;
+  final DateTime? dryOffDate;
   final DateTime? nextPregnancyCheckDate;
   final int age;
 
@@ -25,16 +28,26 @@ class Animal {
     this.gender = 'Weiblich',
     this.isCalf = false,
     this.motherId,
-    this.fatherId, // NEU
+    this.fatherId,
     this.weaningDate,
     this.lactationNumber = 0,
+    this.reproStatus = 'offen',
     this.lastInseminationDate,
+    this.expectedCalvingDate,
+    this.dryOffDate,
     this.nextPregnancyCheckDate,
     required this.age,
   });
 
   factory Animal.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    // Hilfsfunktion für sicheres Datum-Parsing
+    DateTime? toDate(dynamic value) {
+      if (value == null) return null;
+      return (value as Timestamp).toDate();
+    }
+
     return Animal(
       id: doc.id,
       name: data['name'] ?? '',
@@ -44,17 +57,15 @@ class Animal {
       gender: data['gender'] ?? 'Weiblich',
       isCalf: data['isCalf'] ?? false,
       motherId: data['motherId'],
-      fatherId: data['fatherId'], // NEU
-      weaningDate: data['weaningDate'] != null
-          ? (data['weaningDate'] as Timestamp).toDate()
-          : null,
+      fatherId: data['fatherId'],
+      weaningDate: toDate(data['weaningDate']),
       lactationNumber: data['lactationNumber'] ?? 0,
-      lastInseminationDate: data['lastInseminationDate'] != null
-          ? (data['lastInseminationDate'] as Timestamp).toDate()
-          : null,
-      nextPregnancyCheckDate: data['nextPregnancyCheckDate'] != null
-          ? (data['nextPregnancyCheckDate'] as Timestamp).toDate()
-          : null,
+      // Neue Felder auslesen
+      reproStatus: data['reproStatus'] ?? 'offen',
+      lastInseminationDate: toDate(data['lastInseminationDate']),
+      expectedCalvingDate: toDate(data['expectedCalvingDate']),
+      dryOffDate: toDate(data['dryOffDate']),
+      nextPregnancyCheckDate: toDate(data['nextPregnancyCheckDate']),
       age: data['age'] ?? 0,
     );
   }
@@ -68,14 +79,19 @@ class Animal {
       'gender': gender,
       'isCalf': isCalf,
       'motherId': motherId,
-      'fatherId': fatherId, // NEU
+      'fatherId': fatherId,
       'weaningDate': weaningDate != null
           ? Timestamp.fromDate(weaningDate!)
           : null,
       'lactationNumber': lactationNumber,
+      'reproStatus': reproStatus,
       'lastInseminationDate': lastInseminationDate != null
           ? Timestamp.fromDate(lastInseminationDate!)
           : null,
+      'expectedCalvingDate': expectedCalvingDate != null
+          ? Timestamp.fromDate(expectedCalvingDate!)
+          : null,
+      'dryOffDate': dryOffDate != null ? Timestamp.fromDate(dryOffDate!) : null,
       'nextPregnancyCheckDate': nextPregnancyCheckDate != null
           ? Timestamp.fromDate(nextPregnancyCheckDate!)
           : null,

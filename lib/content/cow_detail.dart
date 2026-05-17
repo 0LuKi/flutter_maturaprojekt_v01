@@ -1,16 +1,23 @@
+import 'dart:io'; // NEU: Für das Laden lokaler Bilddateien (File)
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_maturaprojekt_v01/content/edit_animal_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/edit_calving_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/edit_medical_page.dart';
+import 'package:flutter_maturaprojekt_v01/content/reproduction/reproduction_tab.dart';
+import 'package:flutter_maturaprojekt_v01/content/reproduction/add_repro_event_page.dart';
+import 'package:flutter_maturaprojekt_v01/utilities/reproduction_calculator.dart';
+
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/models/animal.dart';
 import 'package:flutter_maturaprojekt_v01/models/calving_history.dart';
 import 'package:flutter_maturaprojekt_v01/models/medical_record.dart';
 import 'package:flutter_maturaprojekt_v01/models/milk_yield.dart';
+import 'package:flutter_maturaprojekt_v01/models/farm_document.dart'; 
 import 'package:flutter_maturaprojekt_v01/services/database_service.dart';
 import 'package:intl/intl.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:share_plus/share_plus.dart'; // NEU: Für das Herunterladen/Teilen
 
 class CowDetail extends StatefulWidget {
   final Animal animal;
@@ -27,7 +34,6 @@ class _CowDetailState extends State<CowDetail>
   late TabController _tabController;
   final DateFormat _dateFormat = DateFormat('dd.MM.yyyy');
 
-  // Hilfsvariable für Logik
   late bool _isCalf;
   late Animal _animal;
 
@@ -37,9 +43,8 @@ class _CowDetailState extends State<CowDetail>
     _animal = widget.animal;
     _isCalf = _animal.isCalf;
 
-    // Wenn Kalb: Nur 2 Tabs (Info, Gesundheit).
-    // Wenn Kuh: 4 Tabs (Info, Milch, Gesundheit, Kalbung).
-    int tabCount = _isCalf ? 2 : 4;
+    // 2 Tabs für Kälber, 5 Tabs für Kühe
+    int tabCount = _isCalf ? 2 : 5;
 
     _tabController = TabController(length: tabCount, vsync: this);
     _tabController.addListener(() => setState(() {}));
@@ -67,49 +72,21 @@ class _CowDetailState extends State<CowDetail>
     }
   }
 
-  // --- Helper to prevent text cutoff in Tabs ---
-  Tab _buildResponsiveTab(String text, IconData icon) {
-    return Tab(
-      height: 60,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(height: 2),
-          FittedBox(fit: BoxFit.scaleDown, child: Text(text)),
-        ],
-      ),
-    );
-  }
-
   String _calculateAgeText(DateTime birthDate) {
     final now = DateTime.now();
     int years = now.year - birthDate.year;
     int months = now.month - birthDate.month;
-
-    if (now.day < birthDate.day) {
-      months--;
-    }
-
+    if (now.day < birthDate.day) months--;
     if (months < 0) {
       years--;
       months += 12;
     }
-
     if (years <= 0 && months <= 0) {
       final days = now.difference(birthDate).inDays;
       return '$days ${days == 1 ? 'Tag' : 'Tage'}';
     }
-
-    if (years <= 0) {
-      return '$months ${months == 1 ? 'Monat' : 'Monate'}';
-    }
-
-    if (months == 0) {
-      return '$years ${years == 1 ? 'Jahr' : 'Jahre'}';
-    }
-
+    if (years <= 0) return '$months ${months == 1 ? 'Monat' : 'Monate'}';
+    if (months == 0) return '$years ${years == 1 ? 'Jahr' : 'Jahre'}';
     return '$years ${years == 1 ? 'Jahr' : 'Jahre'}, $months ${months == 1 ? 'Monat' : 'Monate'}';
   }
 
@@ -121,8 +98,13 @@ class _CowDetailState extends State<CowDetail>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(_animal.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          _animal.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
         actions: [
           TextButton.icon(
             onPressed: widget.dbService == null ? null : _openEditPage,
@@ -130,45 +112,91 @@ class _CowDetailState extends State<CowDetail>
             label: const Text('Bearbeiten'),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: colorScheme.primary,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurfaceVariant,
-          tabs: _isCalf
-              ? [
-                  _buildResponsiveTab(loc.dashboard, Icons.info_outline),
-                  _buildResponsiveTab(loc.health, Icons.medical_services_outlined),
-                ]
-              : [
-                  _buildResponsiveTab(loc.dashboard, Icons.info_outline),
-                  _buildResponsiveTab(loc.milk, MdiIcons.bucketOutline),
-                  _buildResponsiveTab(loc.health, Icons.medical_services_outlined),
-                  _buildResponsiveTab(loc.calving, MdiIcons.cow),
-                ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _isCalf
-            ? [_buildInfoTab(colorScheme), _buildMedicalTab(colorScheme)]
-            : [
-                _buildInfoTab(colorScheme),
-                _buildMilkTab(colorScheme),
-                _buildMedicalTab(colorScheme),
-                _buildCalvingTab(colorScheme),
-              ],
+      body: Column(
+        children: [
+          // TAB-BAR BEREICH (Gleichmäßig verteilt)
+          Container(
+            color: colorScheme.surface,
+            width: double.infinity,
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: colorScheme.primary,
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              isScrollable: false,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+              tabs: _isCalf
+                  ? [
+                      _buildResponsiveTab(loc.dashboard, Icons.info_outline),
+                      _buildResponsiveTab(
+                        loc.health,
+                        Icons.medical_services_outlined,
+                      ),
+                    ]
+                  : [
+                      _buildResponsiveTab(loc.dashboard, Icons.info_outline),
+                      _buildResponsiveTab(loc.milk, MdiIcons.bucketOutline),
+                      _buildResponsiveTab('Reproduktion', Icons.auto_graph),
+                      _buildResponsiveTab(
+                        loc.health,
+                        Icons.medical_services_outlined,
+                      ),
+                      _buildResponsiveTab(loc.calving, MdiIcons.cow),
+                    ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: _isCalf
+                  ? [_buildInfoTab(colorScheme), _buildMedicalTab(colorScheme)]
+                  : [
+                      _buildInfoTab(colorScheme),
+                      _buildMilkTab(colorScheme),
+                      ReproductionTab(
+                        animalId: _animal.id,
+                        animalName: _animal.name,
+                        currentStatus: _animal.reproStatus,
+                      ),
+                      _buildMedicalTab(colorScheme),
+                      _buildCalvingTab(colorScheme),
+                    ],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _buildFloatingActionButton(colorScheme),
     );
   }
 
-  // --- 1. INFO TAB ---
+  Tab _buildResponsiveTab(String text, IconData icon) {
+    return Tab(
+      height: 60,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- INFO TAB (inkl. Dokumente) ---
   Widget _buildInfoTab(ColorScheme colorScheme) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Header Card
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -180,22 +208,22 @@ class _CowDetailState extends State<CowDetail>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: widget.animal.isCalf
+                  color: _animal.isCalf
                       ? Colors.orange[100]
                       : colorScheme.primaryContainer,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  widget.animal.isCalf ? MdiIcons.babyCarriage : MdiIcons.cow,
+                  _animal.isCalf ? MdiIcons.babyCarriage : MdiIcons.cow,
                   size: 48,
-                  color: widget.animal.isCalf
+                  color: _animal.isCalf
                       ? Colors.deepOrange
                       : colorScheme.onPrimaryContainer,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                widget.animal.name,
+                _animal.name,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -203,8 +231,24 @@ class _CowDetailState extends State<CowDetail>
                 ),
               ),
               const SizedBox(height: 4),
+              if (!_animal.isCalf)
+                Chip(
+                  label: Text(
+                    ReproductionCalculator.mapStatusToGerman(
+                      _animal.reproStatus,
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: _getReproColor(_animal.reproStatus),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
               Text(
-                'Ohrmarke: ${widget.animal.earTagNumber}',
+                'Ohrmarke: ${_animal.earTagNumber}',
                 style: TextStyle(
                   fontSize: 16,
                   color: colorScheme.onSurfaceVariant,
@@ -214,28 +258,24 @@ class _CowDetailState extends State<CowDetail>
           ),
         ),
         const SizedBox(height: 24),
-
         _buildSectionHeader('Allgemein', colorScheme),
         _buildInfoRow(
           'Geburtsdatum',
-          _dateFormat.format(widget.animal.birthDate),
+          _dateFormat.format(_animal.birthDate),
           colorScheme,
         ),
         _buildInfoRow(
           'Alter',
-          _calculateAgeText(widget.animal.birthDate),
+          _calculateAgeText(_animal.birthDate),
           colorScheme,
         ),
-        if (widget.animal.breed.isNotEmpty)
-          _buildInfoRow('Rasse', widget.animal.breed, colorScheme),
-        _buildInfoRow('Geschlecht', widget.animal.gender, colorScheme),
-
+        if (_animal.breed.isNotEmpty)
+          _buildInfoRow('Rasse', _animal.breed, colorScheme),
+        _buildInfoRow('Geschlecht', _animal.gender, colorScheme),
         const SizedBox(height: 16),
-
-        if (widget.animal.isCalf) ...[
+        if (_animal.isCalf) ...[
           _buildSectionHeader('Kälber-Details', colorScheme),
-          if (widget.animal.motherId != null &&
-              widget.animal.motherId!.isNotEmpty)
+          if (_animal.motherId != null && _animal.motherId!.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -258,68 +298,188 @@ class _CowDetailState extends State<CowDetail>
                   ),
                   if (widget.dbService != null)
                     MotherNameDisplay(
-                      motherId: widget.animal.motherId!,
+                      motherId: _animal.motherId!,
                       dbService: widget.dbService!,
                     ),
                 ],
               ),
             ),
-          if (widget.animal.weaningDate != null)
+          if (_animal.weaningDate != null)
             _buildInfoRow(
-              'Geplantes Absetzdatum',
-              _dateFormat.format(widget.animal.weaningDate!),
+              'Absetzdatum',
+              _dateFormat.format(_animal.weaningDate!),
               colorScheme,
             ),
-          if (widget.animal.fatherId != null &&
-              widget.animal.fatherId!.isNotEmpty)
-            _buildInfoRow('Vater', widget.animal.fatherId!, colorScheme),
+          if (_animal.fatherId != null && _animal.fatherId!.isNotEmpty)
+            _buildInfoRow('Vater', _animal.fatherId!, colorScheme),
         ] else ...[
           _buildSectionHeader('Produktion & Reproduktion', colorScheme),
           _buildInfoRow(
             'Laktationsnummer',
-            '${widget.animal.lactationNumber}',
+            '${_animal.lactationNumber}',
             colorScheme,
           ),
-          if (widget.animal.lastInseminationDate != null)
+          if (_animal.expectedCalvingDate != null)
             _buildInfoRow(
-              'Letzte Besamung',
-              _dateFormat.format(widget.animal.lastInseminationDate!),
-              colorScheme,
-            ),
-          if (widget.animal.nextPregnancyCheckDate != null)
-            _buildInfoRow(
-              'Nächster Trächtigkeitscheck',
-              _dateFormat.format(widget.animal.nextPregnancyCheckDate!),
+              'Erw. Kalbetermin',
+              _dateFormat.format(_animal.expectedCalvingDate!),
               colorScheme,
               isHighlight: true,
             ),
-          FutureBuilder<double>(
-            future: widget.dbService?.calculateBesamungsindex(widget.animal.id),
+          if (_animal.dryOffDate != null)
+            _buildInfoRow(
+              'Trockenstellen am',
+              _dateFormat.format(_animal.dryOffDate!),
+              colorScheme,
+            ),
+        ],
+
+        // --- NEU: ZUGEORDNETE DOKUMENTE ---
+        const SizedBox(height: 24),
+        _buildSectionHeader('Zugeordnete Dokumente', colorScheme),
+        if (widget.dbService != null)
+          StreamBuilder<List<FarmDocument>>(
+            stream: widget.dbService!.getFarmDocumentsForAnimal(_animal.id),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return SizedBox.shrink();
-              final index = snapshot.data!;
-              return _buildInfoRow(
-                'Besamungsindex',
-                index.toStringAsFixed(2),
-                colorScheme,
-                isHighlight: index > 2.5,
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Fehler: ${snapshot.error}'));
+              }
+
+              final docs = snapshot.data ?? [];
+
+              if (docs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.only(left: 4.0, top: 4.0),
+                  child: Text(
+                    'Keine Dokumente für dieses Tier hinterlegt.',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics:
+                    const NeverScrollableScrollPhysics(), // Wichtig in einem ListView
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  // Wir verwenden deine hübsche DetailCard für einheitliches Design
+                  return _buildDetailCard(
+                    title: doc.title,
+                    subtitle: doc.category,
+                    date: doc.createdAt,
+                    icon: Icons.document_scanner_outlined,
+                    iconColor: Colors.indigo,
+                    colorScheme: colorScheme,
+                    onTap: () {
+                      // Beim Tippen öffnet sich der Dialog mit dem Bild
+                      showDialog(
+                        context: context,
+                        builder: (context) => Dialog(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppBar(
+                                title: Text(doc.title),
+                                leading: IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                                // NEU: Share / Download Button
+                                actions: [
+                                  IconButton(
+                                    icon: const Icon(Icons.download),
+                                    tooltip: 'Herunterladen / Teilen',
+                                    onPressed: () async {
+                                      try {
+                                        await Share.shareXFiles(
+                                          [XFile(doc.storageUrl)],
+                                          text: doc.title,
+                                        );
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Fehler beim Teilen: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                              Flexible(
+                                child: InteractiveViewer(
+                                  child: Image.file(
+                                    File(doc.storageUrl),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Padding(
+                                        padding: EdgeInsets.all(32.0),
+                                        child: Text(
+                                          'Bild konnte nicht geladen werden.',
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    onDelete: () => _confirmDeletion(
+                      context,
+                      () => widget.dbService!.deleteFarmDocument(doc.id),
+                    ),
+                  );
+                },
               );
             },
           ),
-        ],
+        const SizedBox(height: 32),
       ],
     );
   }
 
-  // --- 2. MILCH TAB (Update: Bearbeiten & Löschen) ---
+  Color _getReproColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'offen':
+        return Colors.redAccent;
+      case 'belegt':
+        return Colors.orange;
+      case 'traechtig':
+        return Colors.green;
+      case 'trocken':
+        return Colors.blueGrey;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildMilkTab(ColorScheme colorScheme) {
     return StreamBuilder<List<MilkYield>>(
-      stream: widget.dbService?.getMilkYields(widget.animal.id),
+      stream: widget.dbService?.getMilkYields(_animal.id),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         final list = snapshot.data!;
-        if (list.isEmpty) return _buildEmptyState('Keine Milchdaten', MdiIcons.bucketOutline, colorScheme);
-
+        if (list.isEmpty)
+          return _buildEmptyState(
+            'Keine Milchdaten',
+            MdiIcons.bucketOutline,
+            colorScheme,
+          );
         return ListView.builder(
           itemCount: list.length,
           padding: const EdgeInsets.all(16),
@@ -332,10 +492,11 @@ class _CowDetailState extends State<CowDetail>
               icon: MdiIcons.water,
               iconColor: Colors.blue,
               colorScheme: colorScheme,
-              onTap: () => _showAddMilkDialog(record: item), // Bearbeiten
-              onDelete: () => _confirmDeletion(context, () {
-                widget.dbService?.deleteMilkYield(widget.animal.id, item.id);
-              }),
+              onTap: () => _showAddMilkDialog(record: item),
+              onDelete: () => _confirmDeletion(
+                context,
+                () => widget.dbService?.deleteMilkYield(_animal.id, item.id),
+              ),
             );
           },
         );
@@ -343,15 +504,19 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // --- 3. MEDICAL TAB (Update: Neue Seite & Löschen) ---
   Widget _buildMedicalTab(ColorScheme colorScheme) {
     return StreamBuilder<List<MedicalRecord>>(
-      stream: widget.dbService?.getMedicalRecords(widget.animal.id),
+      stream: widget.dbService?.getMedicalRecords(_animal.id),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         final list = snapshot.data!;
-        if (list.isEmpty) return _buildEmptyState('Keine Behandlungen', Icons.medical_services_outlined, colorScheme);
-
+        if (list.isEmpty)
+          return _buildEmptyState(
+            'Keine Behandlungen',
+            Icons.medical_services_outlined,
+            colorScheme,
+          );
         return ListView.builder(
           itemCount: list.length,
           padding: const EdgeInsets.all(16),
@@ -359,18 +524,27 @@ class _CowDetailState extends State<CowDetail>
             final item = list[index];
             return _buildDetailCard(
               title: item.diagnosis,
-              subtitle: '${item.treatment}${item.cost > 0 ? ' (${item.cost.toStringAsFixed(2)} €)' : ''}',
+              subtitle:
+                  '${item.treatment}${item.cost > 0 ? ' (${item.cost.toStringAsFixed(2)} €)' : ''}',
               date: item.date,
               icon: Icons.healing,
               iconColor: Colors.red,
               colorScheme: colorScheme,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => EditMedicalPage(animal: _animal, dbService: widget.dbService!, record: item)),
+                MaterialPageRoute(
+                  builder: (_) => EditMedicalPage(
+                    animal: _animal,
+                    dbService: widget.dbService!,
+                    record: item,
+                  ),
+                ),
               ),
-              onDelete: () => _confirmDeletion(context, () {
-                widget.dbService?.deleteMedicalRecord(widget.animal.id, item.id);
-              }),
+              onDelete: () => _confirmDeletion(
+                context,
+                () =>
+                    widget.dbService?.deleteMedicalRecord(_animal.id, item.id),
+              ),
             );
           },
         );
@@ -378,15 +552,19 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // --- 4. CALVING TAB (Update: Neue Seite & Löschen) ---
   Widget _buildCalvingTab(ColorScheme colorScheme) {
     return StreamBuilder<List<CalvingHistory>>(
-      stream: widget.dbService?.getCalvingHistory(widget.animal.id),
+      stream: widget.dbService?.getCalvingHistory(_animal.id),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         final list = snapshot.data!;
-        if (list.isEmpty) return _buildEmptyState('Keine Kalbungen', MdiIcons.babyCarriageOff, colorScheme);
-
+        if (list.isEmpty)
+          return _buildEmptyState(
+            'Keine Kalbungen',
+            MdiIcons.babyCarriageOff,
+            colorScheme,
+          );
         return ListView.builder(
           itemCount: list.length,
           padding: const EdgeInsets.all(16),
@@ -401,11 +579,19 @@ class _CowDetailState extends State<CowDetail>
               colorScheme: colorScheme,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => EditCalvingPage(animal: _animal, dbService: widget.dbService!, record: item)),
+                MaterialPageRoute(
+                  builder: (_) => EditCalvingPage(
+                    animal: _animal,
+                    dbService: widget.dbService!,
+                    record: item,
+                  ),
+                ),
               ),
-              onDelete: () => _confirmDeletion(context, () {
-                widget.dbService?.deleteCalvingHistory(widget.animal.id, item.id);
-              }),
+              onDelete: () => _confirmDeletion(
+                context,
+                () =>
+                    widget.dbService?.deleteCalvingHistory(_animal.id, item.id),
+              ),
             );
           },
         );
@@ -468,9 +654,6 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // --- HELPER WIDGETS ---
-
-  // Aktualisierte Detail-Karte mit OnTap und OnDelete
   Widget _buildDetailCard({
     required String title,
     required String subtitle,
@@ -492,7 +675,10 @@ class _CowDetailState extends State<CowDetail>
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: colorScheme.surface, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            shape: BoxShape.circle,
+          ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -500,14 +686,22 @@ class _CowDetailState extends State<CowDetail>
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_dateFormat.format(date), style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
-            if (onDelete != null) ...[
-              const SizedBox(width: 8),
+            Text(
+              _dateFormat.format(date),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+            if (onDelete != null)
               IconButton(
-                icon: Icon(Icons.delete_outline, color: colorScheme.error, size: 20),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: colorScheme.error,
+                  size: 20,
+                ),
                 onPressed: onDelete,
               ),
-            ],
           ],
         ),
       ),
@@ -531,33 +725,69 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // Aktualisierter FAB: Springt jetzt auf neue Seiten statt Dialoge
   Widget? _buildFloatingActionButton(ColorScheme colorScheme) {
     if (_tabController.index == 0) return null;
-
     if (_isCalf) {
-      if (_tabController.index == 1) {
-        return _styledFab(colorScheme, () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => EditMedicalPage(animal: _animal, dbService: widget.dbService!))
-        ));
-      }
+      if (_tabController.index == 1)
+        return _styledFab(
+          colorScheme,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditMedicalPage(
+                animal: _animal,
+                dbService: widget.dbService!,
+              ),
+            ),
+          ),
+        );
       return null;
     } else {
-      if (_tabController.index == 1) {
-        return _styledFab(colorScheme, () => _showAddMilkDialog());
-      } else if (_tabController.index == 2) {
-        return _styledFab(colorScheme, () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => EditMedicalPage(animal: _animal, dbService: widget.dbService!))
-        ));
-      } else if (_tabController.index == 3) {
-        return _styledFab(colorScheme, () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => EditCalvingPage(animal: _animal, dbService: widget.dbService!))
-        ));
+      switch (_tabController.index) {
+        case 1:
+          return _styledFab(colorScheme, () => _showAddMilkDialog());
+        case 2:
+          return _styledFab(
+            colorScheme,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddReproEventPage(
+                  animalId: _animal.id,
+                  animalName: _animal.name,
+                ),
+              ),
+            ),
+          );
+        case 3:
+          return _styledFab(
+            colorScheme,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditMedicalPage(
+                  animal: _animal,
+                  dbService: widget.dbService!,
+                ),
+              ),
+            ),
+          );
+        case 4:
+          return _styledFab(
+            colorScheme,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditCalvingPage(
+                  animal: _animal,
+                  dbService: widget.dbService!,
+                ),
+              ),
+            ),
+          );
+        default:
+          return null;
       }
-      return null;
     }
   }
 
@@ -570,17 +800,17 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // --- DIALOGS ---
-
-  // Dialog für Milchmenge (aktualisiert für Bearbeiten)
   void _showAddMilkDialog({MilkYield? record}) {
-    final amountController = TextEditingController(text: record?.amountLiters.toString());
+    final amountController = TextEditingController(
+      text: record?.amountLiters.toString(),
+    );
     String session = record?.session ?? 'Morgens';
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(record == null ? 'Milchmenge erfassen' : 'Milchmenge bearbeiten'),
+        title: Text(
+          record == null ? 'Milchmenge erfassen' : 'Milchmenge bearbeiten',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -592,64 +822,19 @@ class _CowDetailState extends State<CowDetail>
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: session,
-              items: ['Morgens', 'Abends', 'Mittags'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              decoration: InputDecoration(
+                labelText: 'Session',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.schedule),
+              ),
+              items: [
+                'Morgens',
+                'Abends',
+                'Mittags',
+              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: (val) => session = val!,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
-          FilledButton(
-            onPressed: () {
-              final newRecord = MilkYield(
-                id: record?.id ?? '',
-                date: record?.date ?? DateTime.now(),
-                amountLiters: double.tryParse(amountController.text) ?? 0.0,
-                session: session,
-              );
-              if (record == null) {
-                widget.dbService?.addMilkYield(widget.animal.id, newRecord);
-              } else {
-                widget.dbService?.updateMilkYield(widget.animal.id, newRecord);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Speichern'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddMedicalDialog() {
-    final diagnosisCtrl = TextEditingController();
-    final treatmentCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Krankheit / Behandlung'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: diagnosisCtrl,
-              decoration: InputDecoration(
-                labelText: 'Diagnose / Grund',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: treatmentCtrl,
-              decoration: InputDecoration(
-                labelText: 'Behandlung / Medikament',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
           ],
         ),
@@ -660,13 +845,16 @@ class _CowDetailState extends State<CowDetail>
           ),
           FilledButton(
             onPressed: () {
-              if (diagnosisCtrl.text.isEmpty) return;
-              final record = MedicalRecord(
-                date: DateTime.now(),
-                diagnosis: diagnosisCtrl.text,
-                treatment: treatmentCtrl.text, id: '', //HIERHIERHIER
+              final newRecord = MilkYield(
+                id: record?.id ?? '',
+                date: record?.date ?? DateTime.now(),
+                amountLiters: double.tryParse(amountController.text) ?? 0.0,
+                session: session,
               );
-              widget.dbService?.addMedicalRecord(widget.animal.id, record);
+              if (record == null)
+                widget.dbService?.addMilkYield(_animal.id, newRecord);
+              else
+                widget.dbService?.updateMilkYield(_animal.id, newRecord);
               Navigator.pop(context);
             },
             child: const Text('Speichern'),
@@ -676,9 +864,6 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
-  // --- HILFS-METHODEN ---
-
-  // Zentraler Bestätigungs-Dialog zum Löschen
   void _confirmDeletion(BuildContext context, VoidCallback onConfirm) {
     showDialog(
       context: context,
@@ -686,7 +871,10 @@ class _CowDetailState extends State<CowDetail>
         title: const Text('Löschen bestätigen?'),
         content: const Text('Dieser Eintrag wird unwiderruflich entfernt.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
           FilledButton(
             onPressed: () {
               onConfirm();
@@ -698,232 +886,27 @@ class _CowDetailState extends State<CowDetail>
       ),
     );
   }
-
-  // --- NEUER DIALOG: KALB ANLEGEN & VERKNÜPFEN ---
-  void _showAddCalfDialog() {
-    // Controller
-    final nameCtrl = TextEditingController();
-    final earTagCtrl = TextEditingController();
-    final breedCtrl = TextEditingController();
-    final fatherCtrl = TextEditingController();
-    // Mutter ist fixiert auf DIESE Kuh
-    final motherName = widget.animal.name;
-
-    // Status
-    DateTime birthDate = DateTime.now();
-    String gender = 'Weiblich';
-    DateTime? weaningDate;
-
-    // Zusätzliche Info für den Verlauf
-    String calvingCourse = 'Normal';
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final colorScheme = Theme.of(context).colorScheme;
-
-            return AlertDialog(
-              title: const Text('Kalbung & Neues Kalb'),
-              scrollable: true,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Dieses Kalb wird automatisch als Kind dieser Kuh gespeichert.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildSectionHeader('Das Kalb', colorScheme),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: _inputDeco(
-                      'Name / Rufname des Kalbes',
-                      Icons.child_care,
-                    ),
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: earTagCtrl,
-                    decoration: _inputDeco(
-                      'Ohrmarkennummer',
-                      Icons.confirmation_number,
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDatePickerField(
-                    label: 'Geburtsdatum',
-                    value: birthDate,
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: birthDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null) setState(() => birthDate = picked);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: gender,
-                    decoration: _inputDeco('Geschlecht', Icons.wc),
-                    items: ['Weiblich', 'Männlich']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) => setState(() => gender = val!),
-                  ),
-
-                  const SizedBox(height: 16),
-                  _buildSectionHeader('Details', colorScheme),
-                  TextField(
-                    controller: breedCtrl,
-                    decoration: _inputDeco('Rasse', Icons.pets),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: fatherCtrl,
-                    decoration: _inputDeco('Vater (Name/Ohrmarke)', Icons.male),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: calvingCourse,
-                    decoration: _inputDeco(
-                      'Verlauf der Geburt',
-                      Icons.health_and_safety,
-                    ),
-                    items: ['Normal', 'Schwer', 'Kaiserschnitt']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) => setState(() => calvingCourse = val!),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Abbrechen'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    if (nameCtrl.text.isEmpty) return;
-
-                    final newCalf = Animal(
-                      id: '',
-                      name: nameCtrl.text,
-                      earTagNumber: earTagCtrl.text,
-                      birthDate: birthDate,
-                      breed: breedCtrl.text,
-                      gender: gender,
-                      isCalf: true, // Ist immer ein Kalb
-                      motherId: motherName, // Automatisch gesetzt
-                      fatherId: fatherCtrl.text.isNotEmpty
-                          ? fatherCtrl.text
-                          : null,
-                      weaningDate: weaningDate,
-                      lactationNumber: 0,
-                      age:
-                          DateTime.now().difference(birthDate).inDays ~/
-                          365, // Calculate age in years
-                    );
-
-                    // Spezielle Funktion im Service nutzen
-                    widget.dbService?.addCalfWithMotherLink(
-                      calf: newCalf,
-                      motherIdentifier: motherName,
-                      calvingDetails: CalvingHistory(
-                        date: birthDate,
-                        calvingCourse: calvingCourse,
-                        calfCount: '1', id: '', //HIERHIERHIER
-                      ),
-                    );
-
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Kalb anlegen'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // --- DUPLICATE HELPERS FOR DIALOG (Lokale Kopie um Abhängigkeiten zu vermeiden) ---
-  InputDecoration _inputDeco(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, size: 20),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-    );
-  }
-
-  Widget _buildDatePickerField({
-    required String label,
-    DateTime? value,
-    required VoidCallback onTap,
-    bool isHighlight = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: InputDecorator(
-        isEmpty: value == null,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(
-            Icons.calendar_today,
-            size: 20,
-            color: isHighlight ? Colors.red : null,
-          ),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 14,
-          ),
-        ),
-        child: Text(
-          value != null ? DateFormat('dd.MM.yyyy').format(value) : '',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
-    );
-  }
 }
 
 class MotherNameDisplay extends StatelessWidget {
   final String motherId;
   final DatabaseService dbService;
-
   const MotherNameDisplay({
     super.key,
     required this.motherId,
     required this.dbService,
   });
-
   @override
   Widget build(BuildContext context) {
-    // Wir nutzen den Stream, den du bereits im DatabaseService hast
     return StreamBuilder<Animal>(
       stream: dbService.getAnimal(motherId),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting)
           return const Text("Lädt...");
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
+        if (snapshot.hasError || !snapshot.hasData)
           return const Text("Unbekannt");
-        }
-
-        final mother = snapshot.data!;
         return Text(
-          mother.name, // Hier wird jetzt der Name angezeigt!
+          snapshot.data!.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         );
       },

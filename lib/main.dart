@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_maturaprojekt_v01/content/appointments_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/dashboard_page.dart';
+import 'package:flutter_maturaprojekt_v01/content/feed_overview_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/livestock_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
-import 'package:flutter_maturaprojekt_v01/services/database_seeder.dart';
+import 'package:flutter_maturaprojekt_v01/services/database_service.dart';
 import 'package:flutter_maturaprojekt_v01/services/notification_service.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/bottom_nav_bar.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/open_menu.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -57,7 +59,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: "FarmManager",
           theme: baseLight,
-          darkTheme: baseLight, // danach auf baseDark ändern
+          darkTheme: baseDark, // danach auf baseDark ändern
           themeMode: ThemeMode.system,
 
           // Andere Sprachen
@@ -113,6 +115,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int currentPageIndex = 0;
+  late DatabaseService _dbService;
+
+  @override
+  void initState() {
+    super.initState();
+    // Den Service einmalig für den aktuell eingeloggten User erstellen
+    final user = FirebaseAuth.instance.currentUser!;
+    _dbService = DatabaseService(userId: user.uid);
+  }
 
   void onTabChanged(int index) {
     setState(() {
@@ -132,8 +143,9 @@ class _HomePageState extends State<HomePage> {
 
     final pages = [
       DashboardPage(changeTab: onTabChanged),
-      const LivestockPage(),
-      const AppointmentsPage(),
+      LivestockPage(dbService: _dbService),
+      AppointmentsPage(),
+      const FeedOverviewPage(),
     ];
 
     return Scaffold(
@@ -173,6 +185,12 @@ class _HomePageState extends State<HomePage> {
                       icon: const Icon(Icons.calendar_today_outlined),
                       selectedIcon: const Icon(Icons.calendar_today),
                       label: Text(loc?.appointments ?? 'Aufgaben'),
+                    ),
+                    // <--- NEU: Futter-Tab für den Desktop
+                    NavigationRailDestination(
+                      icon: Icon(MdiIcons.grass),
+                      selectedIcon: Icon(MdiIcons.grass),
+                      label: const Text('Futter'),
                     ),
                   ],
                 ),

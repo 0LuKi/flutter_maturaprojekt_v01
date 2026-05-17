@@ -32,7 +32,6 @@ class OpenMenuState extends State<OpenMenu> {
     final user = FirebaseAuth.instance.currentUser;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Helper for initials if no photo is available
     String initials() {
       final name = user?.displayName;
       if (name != null && name.trim().isNotEmpty) {
@@ -46,11 +45,10 @@ class OpenMenuState extends State<OpenMenu> {
     return Drawer(
       backgroundColor: colorScheme.surface,
       elevation: 0,
-      width: 300, // Slightly wider for a premium feel
+      width: 300,
       child: SafeArea(
         child: Column(
           children: [
-            // --- MODERN HEADER ---
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 16, 24),
               child: Row(
@@ -122,7 +120,6 @@ class OpenMenuState extends State<OpenMenu> {
             ),
             const SizedBox(height: 16),
 
-            // --- NAVIGATION ITEMS ---
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -148,7 +145,15 @@ class OpenMenuState extends State<OpenMenu> {
                     index: 2,
                     colorScheme: colorScheme,
                   ),
-                  // Space for more items
+                  // NEU: Futter Menüpunkt
+                  _buildModernNavItem(
+                    context,
+                    icon: MdiIcons.grass, // Ein schönes Gras/Futter Icon
+                    label:
+                        'Futter', // Kann später durch loc.feed ersetzt werden
+                    index: 3,
+                    colorScheme: colorScheme,
+                  ),
                 ],
               ),
             ),
@@ -174,7 +179,7 @@ class OpenMenuState extends State<OpenMenu> {
                 ),
               ),
             ),
-            // --- FOOTER ---
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               child: Column(
@@ -258,9 +263,7 @@ class OpenMenuState extends State<OpenMenu> {
           ),
         ),
         onTap: () {
-          // Close drawer first, then change index
           Navigator.pop(context);
-          // Small delay for visual consistency if needed, but direct call is snappier
           widget.onIndexChanged(index);
         },
       ),
