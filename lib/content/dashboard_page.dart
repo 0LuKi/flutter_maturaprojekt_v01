@@ -221,7 +221,8 @@ class _DashboardPageState extends State<DashboardPage> {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: 20,
+          minY: 200,
+          maxY: 500,
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
@@ -235,8 +236,8 @@ class _DashboardPageState extends State<DashboardPage> {
             leftTitles: const AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
-                interval: 5,
+                reservedSize: 35,
+                interval: 50,
               ),
             ),
             bottomTitles: AxisTitles(
@@ -274,7 +275,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       text = '';
                   }
                   return SideTitleWidget(
-                    meta: meta,
+                    axisSide: meta.axisSide,
                     space: 4.0,
                     child: Text(text, style: style),
                   );
@@ -283,13 +284,13 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           barGroups: [
-            _makeGroupData(0, 8, colorScheme),
-            _makeGroupData(1, 12, colorScheme),
-            _makeGroupData(2, 16, colorScheme),
-            _makeGroupData(3, 10, colorScheme),
-            _makeGroupData(4, 18, colorScheme),
-            _makeGroupData(5, 14, colorScheme),
-            _makeGroupData(6, 9, colorScheme),
+            _makeGroupData(0, 445, colorScheme),
+            _makeGroupData(1, 453, colorScheme),
+            _makeGroupData(2, 438, colorScheme),
+            _makeGroupData(3, 443, colorScheme),
+            _makeGroupData(4, 460, colorScheme),
+            _makeGroupData(5, 455, colorScheme),
+            _makeGroupData(6, 448, colorScheme),
           ],
         ),
       ),
@@ -307,7 +308,7 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: 20,
+            toY: 500,
             color: colors.surface.withOpacity(0.5),
           ),
         ),

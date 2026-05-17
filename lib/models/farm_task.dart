@@ -5,14 +5,18 @@ class FarmTask {
   final String title;
   final DateTime dueDate;
   final bool isCompleted;
-  final String category;  // Add this field
+  final String category; // Add this field
+  final String notificationOption;
+  final DateTime? notificationTime;
 
   FarmTask({
     required this.id,
     required this.title,
     required this.dueDate,
     this.isCompleted = false,
-    required this.category,  // Add this parameter
+    required this.category, // Add this parameter
+    this.notificationOption = 'none',
+    this.notificationTime,
   });
 
   factory FarmTask.fromFirestore(DocumentSnapshot doc) {
@@ -23,6 +27,10 @@ class FarmTask {
       dueDate: (data['dueDate'] as Timestamp).toDate(),
       isCompleted: data['isCompleted'] ?? false,
       category: data['category'] ?? '',
+      notificationOption: data['notificationOption'] ?? 'none',
+      notificationTime: data['notificationTime'] != null
+          ? (data['notificationTime'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -33,7 +41,11 @@ class FarmTask {
       title: json['title'] as String,
       dueDate: DateTime.parse(json['dueDate'] as String),
       isCompleted: json['isCompleted'] as bool? ?? false,
-      category: json['category'] as String? ?? 'General',  // Add this
+      category: json['category'] as String? ?? 'General', // Add this
+      notificationOption: json['notificationOption'] as String? ?? 'none',
+      notificationTime: json['notificationTime'] != null
+          ? DateTime.parse(json['notificationTime'] as String)
+          : null,
     );
   }
 
@@ -43,7 +55,9 @@ class FarmTask {
       'title': title,
       'dueDate': dueDate.toIso8601String(),
       'isCompleted': isCompleted,
-      'category': category,  // Add this
+      'category': category, // Add this
+      'notificationOption': notificationOption,
+      'notificationTime': notificationTime?.toIso8601String(),
     };
   }
 
@@ -52,6 +66,11 @@ class FarmTask {
       'title': title,
       'dueDate': Timestamp.fromDate(dueDate),
       'isCompleted': isCompleted,
+      'category': category,
+      'notificationOption': notificationOption,
+      'notificationTime': notificationTime != null
+          ? Timestamp.fromDate(notificationTime!)
+          : null,
     };
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_maturaprojekt_v01/content/add_task_page.dart';
+import 'package:flutter_maturaprojekt_v01/content/task_detail_page.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/services/database_service.dart';
@@ -17,7 +19,7 @@ class AppointmentsPage extends StatefulWidget {
 class _AppointmentsPageState extends State<AppointmentsPage> {
   DatabaseService? _dbService;
   final AuthService _authService = AuthService();
-  
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +41,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context); 
+    final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
@@ -65,29 +67,31 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: isDesktop
-                      ? IconButton(
-                          onPressed: _signOut,
-                          tooltip: loc?.sign_out ?? "Logout",
-                          icon: const Icon(Icons.logout),
-                          color: colorScheme.error,
-                        )
-                      : IconButton(
-                          onPressed: () {
-                            try {
-                              Scaffold.of(context).openEndDrawer();
-                            } catch (e) {
-                              debugPrint("Kein Drawer gefunden");
-                            }
-                          },
-                          tooltip: loc?.menu ?? "Menu",
-                          icon: const Icon(Icons.menu_rounded),
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                  )
+                        ? IconButton(
+                            onPressed: _signOut,
+                            tooltip: loc?.sign_out ?? "Logout",
+                            icon: const Icon(Icons.logout),
+                            color: colorScheme.error,
+                          )
+                        : IconButton(
+                            onPressed: () {
+                              try {
+                                Scaffold.of(context).openEndDrawer();
+                              } catch (e) {
+                                debugPrint("Kein Drawer gefunden");
+                              }
+                            },
+                            tooltip: loc?.menu ?? "Menu",
+                            icon: const Icon(Icons.menu_rounded),
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                  ),
                 ],
               ),
 
@@ -102,9 +106,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: loc?.search ?? 'Suche...',
-                    prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                   ),
                   onChanged: (val) {
                     // Filter logic could go here
@@ -121,20 +131,28 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                     : StreamBuilder<List<FarmTask>>(
                         stream: _dbService!.getTasks(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
-                          
+
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
                             return _buildEmptyState(colorScheme);
                           }
 
                           final allTasks = snapshot.data!;
                           // Filter tasks into two lists
-                          final incompleteTasks = allTasks.where((t) => !t.isCompleted).toList();
-                          final completedTasks = allTasks.where((t) => t.isCompleted).toList();
+                          final incompleteTasks = allTasks
+                              .where((t) => !t.isCompleted)
+                              .toList();
+                          final completedTasks = allTasks
+                              .where((t) => t.isCompleted)
+                              .toList();
 
-                          if (incompleteTasks.isEmpty && completedTasks.isEmpty) {
+                          if (incompleteTasks.isEmpty &&
+                              completedTasks.isEmpty) {
                             return _buildEmptyState(colorScheme);
                           }
 
@@ -142,16 +160,24 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                             padding: const EdgeInsets.only(bottom: 80),
                             children: [
                               // 1. Unchecked Tasks
-                              ...incompleteTasks.map((t) => _buildTaskCard(t, colorScheme)),
+                              ...incompleteTasks.map(
+                                (t) => _buildTaskCard(t, colorScheme),
+                              ),
 
                               // Optional "All Done" message if no incomplete tasks exist but completed ones do
-                              if (incompleteTasks.isEmpty && completedTasks.isNotEmpty)
+                              if (incompleteTasks.isEmpty &&
+                                  completedTasks.isNotEmpty)
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
                                   child: Center(
                                     child: Text(
-                                      "Alles erledigt! 🎉", 
-                                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)
+                                      "Alles erledigt! 🎉",
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -161,9 +187,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                 const SizedBox(height: 16),
                                 Row(
                                   children: [
-                                    Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                                    Expanded(
+                                      child: Divider(
+                                        color: colorScheme.outlineVariant,
+                                      ),
+                                    ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
                                       child: Text(
                                         "Erledigt (${completedTasks.length})",
                                         style: TextStyle(
@@ -173,13 +205,19 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                         ),
                                       ),
                                     ),
-                                    Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                                    Expanded(
+                                      child: Divider(
+                                        color: colorScheme.outlineVariant,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                
+
                                 // 3. Completed Tasks
-                                ...completedTasks.map((t) => _buildTaskCard(t, colorScheme)),
+                                ...completedTasks.map(
+                                  (t) => _buildTaskCard(t, colorScheme),
+                                ),
                               ],
                             ],
                           );
@@ -192,7 +230,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'appointments_fab',
-        onPressed: () => _showAddTaskDialog(context),
+        onPressed: _dbService == null
+            ? null
+            : () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AddTaskPage(dbService: _dbService!),
+                  ),
+                );
+              },
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         child: const Icon(Icons.add),
@@ -207,7 +253,11 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_available, size: 64, color: colorScheme.outline.withOpacity(0.5)),
+          Icon(
+            Icons.event_available,
+            size: 64,
+            color: colorScheme.outline.withOpacity(0.5),
+          ),
           const SizedBox(height: 16),
           Text(
             "Keine Aufgaben",
@@ -219,7 +269,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   Widget _buildTaskCard(FarmTask task, ColorScheme colorScheme) {
-    final isOverdue = task.dueDate.isBefore(DateTime.now()) && !task.isCompleted;
+    final isOverdue =
+        task.dueDate.isBefore(DateTime.now()) && !task.isCompleted;
     final isCompleted = task.isCompleted;
 
     // Dim the completed tasks slightly
@@ -232,10 +283,23 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16),
-          border: isOverdue ? Border.all(color: colorScheme.error.withOpacity(0.5)) : null,
+          border: isOverdue
+              ? Border.all(color: colorScheme.error.withOpacity(0.5))
+              : null,
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    TaskDetailPage(task: task, dbService: _dbService!),
+              ),
+            );
+          },
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -243,8 +307,10 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              _getCategoryIcon(task.category), 
-              color: isOverdue ? colorScheme.error : (isCompleted ? colorScheme.secondary : colorScheme.primary),
+              _getCategoryIcon(task.category),
+              color: isOverdue
+                  ? colorScheme.error
+                  : (isCompleted ? colorScheme.secondary : colorScheme.primary),
               size: 20,
             ),
           ),
@@ -253,20 +319,28 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             style: TextStyle(
               fontWeight: FontWeight.w600,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
-              color: isCompleted ? colorScheme.onSurface.withOpacity(0.6) : colorScheme.onSurface,
+              color: isCompleted
+                  ? colorScheme.onSurface.withOpacity(0.6)
+                  : colorScheme.onSurface,
             ),
           ),
           subtitle: Row(
             children: [
-              if (isOverdue) 
+              if (isOverdue)
                 Padding(
                   padding: const EdgeInsets.only(right: 6.0),
-                  child: Icon(Icons.warning_amber_rounded, size: 14, color: colorScheme.error),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 14,
+                    color: colorScheme.error,
+                  ),
                 ),
               Text(
                 DateFormat('dd.MM.yyyy HH:mm').format(task.dueDate),
                 style: TextStyle(
-                  color: isOverdue ? colorScheme.error : colorScheme.onSurfaceVariant,
+                  color: isOverdue
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -278,7 +352,9 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               Checkbox(
                 value: task.isCompleted,
                 activeColor: colorScheme.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 onChanged: (val) {
                   _dbService!.toggleTaskStatus(task.id, task.isCompleted);
                 },
@@ -289,8 +365,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 color: colorScheme.error.withOpacity(0.7),
                 onPressed: () {
                   _confirmDeleteTask(context, task);
-                }
-              )
+                },
+              ),
             ],
           ),
         ),
@@ -314,10 +390,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context); 
+                Navigator.pop(context);
                 await _dbService?.deleteTask(task.id);
               },
-              child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+              child: Text(
+                loc.delete,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           ],
         );
@@ -326,182 +405,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   IconData _getCategoryIcon(String category) {
-    if (category.toLowerCase().contains('vet') || category.toLowerCase().contains('arzt')) return Icons.medical_services_outlined;
-    if (category.toLowerCase().contains('futter') || category.toLowerCase().contains('feed')) return Icons.restaurant;
-    if (category.toLowerCase().contains('machine') || category.toLowerCase().contains('maschine')) return Icons.build_outlined;
+    if (category.toLowerCase().contains('vet') ||
+        category.toLowerCase().contains('arzt'))
+      return Icons.medical_services_outlined;
+    if (category.toLowerCase().contains('futter') ||
+        category.toLowerCase().contains('feed'))
+      return Icons.restaurant;
+    if (category.toLowerCase().contains('machine') ||
+        category.toLowerCase().contains('maschine'))
+      return Icons.build_outlined;
     return Icons.calendar_today_outlined;
-  }
-
-  void _showAddTaskDialog(BuildContext context) {
-    final titleController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
-    TimeOfDay selectedTime = TimeOfDay.now();
-    String selectedCategory = 'General';
-
-    showDialog(
-      context: context, 
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final colorScheme = Theme.of(context).colorScheme;
-            final loc = AppLocalizations.of(context);
-
-            return AlertDialog(
-              title: Text(loc?.add_task ?? 'Neue Aufgabe'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Titel',
-                        hintText: 'z.B. Tierarzt rufen',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: const Icon(Icons.title),
-                      ),
-                      textCapitalization: TextCapitalization.sentences,
-                      autofocus: true,
-                    ),
-                    const SizedBox(height: 20),
-
-                    Text('Fälligkeit', style: TextStyle(color: colorScheme.outline, fontSize: 12)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: selectedDate,
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-                              );
-                              if (picked != null) {
-                                setState(() => selectedDate = picked);
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: colorScheme.outlineVariant),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_today, size: 18, color: colorScheme.primary),
-                                  const SizedBox(width: 8),
-                                  Text(DateFormat('dd.MM.yyyy').format(selectedDate), style: const TextStyle(fontSize: 13)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showTimePicker(
-                                context: context,
-                                initialTime: selectedTime,
-                              );
-                              if (picked != null) {
-                                setState(() => selectedTime = picked);
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: colorScheme.outlineVariant),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.access_time, size: 18, color: colorScheme.primary),
-                                  const SizedBox(width: 8),
-                                  Text(selectedTime.format(context), style: const TextStyle(fontSize: 13)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Text('Kategorie', style: TextStyle(color: colorScheme.outline, fontSize: 12)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 0,
-                      children: [
-                        _buildCategoryChip(context, 'General', 'Allgemein', Icons.calendar_today, selectedCategory, colorScheme, (val) => setState(() => selectedCategory = val)),
-                        _buildCategoryChip(context, 'Vet', 'Tierarzt', Icons.medical_services, selectedCategory, colorScheme, (val) => setState(() => selectedCategory = val)),
-                        _buildCategoryChip(context, 'Feed', 'Futter', Icons.restaurant, selectedCategory, colorScheme, (val) => setState(() => selectedCategory = val)),
-                        _buildCategoryChip(context, 'Machine', 'Maschine', Icons.build, selectedCategory, colorScheme, (val) => setState(() => selectedCategory = val)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(loc?.cancel ?? 'Abbrechen'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    if (titleController.text.isNotEmpty) {
-                      final dueDateTime = DateTime(
-                        selectedDate.year, 
-                        selectedDate.month, 
-                        selectedDate.day, 
-                        selectedTime.hour, 
-                        selectedTime.minute
-                      );
-
-                      _dbService!.addTask(FarmTask(
-                        id: '', 
-                        title: titleController.text, 
-                        dueDate: dueDateTime,
-                        category: selectedCategory,
-                        isCompleted: false,
-                      ));
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Speichern')
-                ),
-              ],
-            );
-          },
-        );
-      }
-    );
-  }
-
-  Widget _buildCategoryChip(BuildContext context, String id, String label, IconData icon, String selectedId, ColorScheme colorScheme, Function(String) onSelect) {
-    final isSelected = id == selectedId;
-    return ChoiceChip(
-      label: Text(label),
-      avatar: Icon(icon, size: 16, color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant),
-      selected: isSelected,
-      onSelected: (bool selected) {
-        if (selected) onSelect(id);
-      },
-      labelStyle: TextStyle(
-        fontSize: 12,
-        color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-      ),
-      selectedColor: colorScheme.primaryContainer,
-      backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20), 
-        side: BorderSide(color: isSelected ? Colors.transparent : colorScheme.outlineVariant)
-      ),
-    );
   }
 }

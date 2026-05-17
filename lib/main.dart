@@ -5,6 +5,8 @@ import 'package:flutter_maturaprojekt_v01/content/appointments_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/dashboard_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/livestock_page.dart';
 import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
+import 'package:flutter_maturaprojekt_v01/services/database_seeder.dart';
+import 'package:flutter_maturaprojekt_v01/services/notification_service.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/bottom_nav_bar.dart';
 import 'package:flutter_maturaprojekt_v01/theme/colors.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/open_menu.dart';
@@ -17,11 +19,10 @@ import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // FIX: This line MUST have 'options' to work on Web
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService.instance.initialize();
 
   try {
     FirebaseFirestore.instance.settings = const Settings(
@@ -30,6 +31,10 @@ void main() async {
   } catch (e) {
     debugPrint("Persistence not supported on this platform: $e");
   }
+
+  // Uncomment für seeding
+  //await DatabaseSeeder.seedFiveCalves();
+
   runApp(const MyApp());
 }
 
@@ -45,7 +50,7 @@ class MyApp extends StatelessWidget {
           filledButtonTheme: AppTheme.filledButtonTheme(
             ColorsLight.primary,
             Colors.white,
-          ), 
+          ),
         );
         final ThemeData baseDark = AppTheme.darkTheme;
 
@@ -86,7 +91,7 @@ class MyApp extends StatelessWidget {
               // Logged in
               if (snapshot.hasData) {
                 return const HomePage();
-              } 
+              }
               // Not logged in
               else {
                 return const LoginPage();
@@ -119,7 +124,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // Check screen width to determine layout mode
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth > 800;
@@ -133,7 +138,9 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       // On desktop, use a slightly distinct background color to create a "sheet" effect for the content
-      backgroundColor: isDesktop ? colorScheme.surfaceContainerHigh : colorScheme.surface,
+      backgroundColor: isDesktop
+          ? colorScheme.surfaceContainerHigh
+          : colorScheme.surface,
       endDrawer: OpenMenu(
         currentIndex: currentPageIndex,
         onIndexChanged: onTabChanged,
@@ -148,7 +155,9 @@ class _HomePageState extends State<HomePage> {
                   onDestinationSelected: onTabChanged,
                   extended: isWide,
                   minExtendedWidth: 200,
-                  labelType: isWide ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  labelType: isWide
+                      ? NavigationRailLabelType.none
+                      : NavigationRailLabelType.all,
                   destinations: [
                     NavigationRailDestination(
                       icon: const Icon(Icons.dashboard_outlined),
@@ -186,7 +195,8 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-                        clipBehavior: Clip.antiAlias, // Clips the inner Scaffolds to the rounded corners
+                        clipBehavior: Clip
+                            .antiAlias, // Clips the inner Scaffolds to the rounded corners
                         child: pages[currentPageIndex],
                       ),
                     ),
@@ -195,7 +205,6 @@ class _HomePageState extends State<HomePage> {
               ],
             )
           : pages[currentPageIndex], // Mobile Layout
-      
       // Bottom Navigation Bar only for Mobile
       bottomNavigationBar: isDesktop
           ? null

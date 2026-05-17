@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_maturaprojekt_v01/content/edit_animal_page.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/models/animal.dart';
 import 'package:flutter_maturaprojekt_v01/models/calving_history.dart';
@@ -26,11 +27,13 @@ class _CowDetailState extends State<CowDetail>
 
   // Hilfsvariable für Logik
   late bool _isCalf;
+  late Animal _animal;
 
   @override
   void initState() {
     super.initState();
-    _isCalf = widget.animal.isCalf;
+    _animal = widget.animal;
+    _isCalf = _animal.isCalf;
 
     // Wenn Kalb: Nur 2 Tabs (Info, Gesundheit).
     // Wenn Kuh: 4 Tabs (Info, Milch, Gesundheit, Kalbung).
@@ -44,6 +47,22 @@ class _CowDetailState extends State<CowDetail>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openEditPage() async {
+    if (widget.dbService == null) return;
+    final result = await Navigator.of(context).push<Animal>(
+      MaterialPageRoute(
+        builder: (_) =>
+            EditAnimalPage(animal: _animal, dbService: widget.dbService!),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _animal = result;
+        _isCalf = result.isCalf;
+      });
+    }
   }
 
   // --- Helper to prevent text cutoff in Tabs ---
@@ -62,6 +81,36 @@ class _CowDetailState extends State<CowDetail>
     );
   }
 
+  String _calculateAgeText(DateTime birthDate) {
+    final now = DateTime.now();
+    int years = now.year - birthDate.year;
+    int months = now.month - birthDate.month;
+
+    if (now.day < birthDate.day) {
+      months--;
+    }
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    if (years <= 0 && months <= 0) {
+      final days = now.difference(birthDate).inDays;
+      return '$days ${days == 1 ? 'Tag' : 'Tage'}';
+    }
+
+    if (years <= 0) {
+      return '$months ${months == 1 ? 'Monat' : 'Monate'}';
+    }
+
+    if (months == 0) {
+      return '$years ${years == 1 ? 'Jahr' : 'Jahre'}';
+    }
+
+    return '$years ${years == 1 ? 'Jahr' : 'Jahre'}, $months ${months == 1 ? 'Monat' : 'Monate'}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -71,7 +120,7 @@ class _CowDetailState extends State<CowDetail>
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          widget.animal.name,
+          _animal.name,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: colorScheme.onSurface,
@@ -81,6 +130,16 @@ class _CowDetailState extends State<CowDetail>
         backgroundColor: colorScheme.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
+        actions: [
+          TextButton.icon(
+            onPressed: widget.dbService == null ? null : _openEditPage,
+            icon: Icon(Icons.edit, size: 18, color: colorScheme.primary),
+            label: Text(
+              'Bearbeiten',
+              style: TextStyle(color: colorScheme.primary),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           padding: EdgeInsets.zero,
@@ -192,6 +251,11 @@ class _CowDetailState extends State<CowDetail>
           _dateFormat.format(widget.animal.birthDate),
           colorScheme,
         ),
+        _buildInfoRow(
+          'Alter',
+          _calculateAgeText(widget.animal.birthDate),
+          colorScheme,
+        ),
         if (widget.animal.breed.isNotEmpty)
           _buildInfoRow('Rasse', widget.animal.breed, colorScheme),
         _buildInfoRow('Geschlecht', widget.animal.gender, colorScheme),
@@ -202,7 +266,34 @@ class _CowDetailState extends State<CowDetail>
           _buildSectionHeader('Kälber-Details', colorScheme),
           if (widget.animal.motherId != null &&
               widget.animal.motherId!.isNotEmpty)
-            _buildInfoRow('Mutter', widget.animal.motherId!, colorScheme),
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withOpacity(0.5),
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Mutter',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  if (widget.dbService != null)
+                    MotherNameDisplay(
+                      motherId: widget.animal.motherId!,
+                      dbService: widget.dbService!,
+                    ),
+                ],
+              ),
+            ),
           if (widget.animal.weaningDate != null)
             _buildInfoRow(
               'Geplantes Absetzdatum',
@@ -320,25 +411,41 @@ class _CowDetailState extends State<CowDetail>
             colorScheme,
           );
 
-        // Calculate average and detect underperformance
+        // Durchschnitt und Leistung prüfen
         double avg = list.isNotEmpty
             ? list.map((e) => e.amountLiters).reduce((a, b) => a + b) /
                   list.length
             : 0;
-        bool isUnderperforming = avg < 20; // Example threshold
+        bool isUnderperforming = avg < 20;
+
+        // Maximalen Wert ermitteln und Y-Achsen Maximum berechnen (+10)
+        double maxLiters = list.isNotEmpty
+            ? list.map((e) => e.amountLiters).reduce((a, b) => a > b ? a : b)
+            : 0;
+        double chartMaxY = maxLiters + 10;
+
+        // Für das Diagramm drehen wir die Liste um, damit die ältesten Daten links
+        // und die neuesten rechts angezeigt werden.
+        final chartList = list.reversed.toList();
 
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 24,
+                top: 24,
+                bottom: 16,
+              ),
               child: SizedBox(
                 height: 220,
                 child: LineChart(
                   LineChartData(
                     minY: 0,
+                    maxY: chartMaxY, // Hier wird das neue Maximum gesetzt
                     lineBarsData: [
                       LineChartBarData(
-                        spots: list
+                        spots: chartList
                             .asMap()
                             .entries
                             .map(
@@ -351,15 +458,57 @@ class _CowDetailState extends State<CowDetail>
                         isCurved: true,
                         color: Colors.blue,
                         barWidth: 3,
-                        dotData: FlDotData(show: false),
+                        dotData: const FlDotData(show: false),
                       ),
                     ],
                     titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true),
+                      // Oben: Entfernt
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
                       ),
+                      // Rechts: Entfernt
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      // Links: Mehr Platz
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 45,
+                        ),
+                      ),
+                      // Unten: Datum anzeigen
                       bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true),
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index >= 0 && index < chartList.length) {
+                              final date = chartList[index].date;
+                              final dateStr = DateFormat('dd.MM.').format(date);
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  dateStr,
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ),
+                    ),
+                    gridData: FlGridData(show: true, drawVerticalLine: false),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border(
+                        bottom: BorderSide(color: colorScheme.outlineVariant),
+                        left: BorderSide(color: colorScheme.outlineVariant),
+                        right: BorderSide.none,
+                        top: BorderSide.none,
                       ),
                     ),
                   ),
@@ -869,6 +1018,39 @@ class _CowDetailState extends State<CowDetail>
           style: const TextStyle(fontSize: 16),
         ),
       ),
+    );
+  }
+}
+
+class MotherNameDisplay extends StatelessWidget {
+  final String motherId;
+  final DatabaseService dbService;
+
+  const MotherNameDisplay({
+    super.key,
+    required this.motherId,
+    required this.dbService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Wir nutzen den Stream, den du bereits im DatabaseService hast
+    return StreamBuilder<Animal>(
+      stream: dbService.getAnimal(motherId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Text("Lädt...");
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const Text("Unbekannt");
+        }
+
+        final mother = snapshot.data!;
+        return Text(
+          mother.name, // Hier wird jetzt der Name angezeigt!
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        );
+      },
     );
   }
 }

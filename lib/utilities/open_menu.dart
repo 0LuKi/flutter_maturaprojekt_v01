@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_maturaprojekt_v01/content/login_page.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
 import 'package:flutter_maturaprojekt_v01/services/auth_service.dart';
+import 'package:flutter_maturaprojekt_v01/services/database_seeder.dart';
 import 'package:flutter_maturaprojekt_v01/utilities/globals.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -152,6 +153,27 @@ class OpenMenuState extends State<OpenMenu> {
               ),
             ),
 
+            ElevatedButton.icon(
+              onPressed: () async {
+                await DatabaseSeeder.seedFiveCalves();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('20 Kühe hinzugefügt!')),
+                );
+              },
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Testdaten generieren'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.onPrimaryContainer,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
             // --- FOOTER ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),

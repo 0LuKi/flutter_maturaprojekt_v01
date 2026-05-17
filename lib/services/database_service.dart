@@ -310,8 +310,13 @@ class DatabaseService {
         );
   }
 
-  Future<void> addTask(FarmTask task) {
-    return _db.collection('tasks').add(task.toMap());
+  Future<String> addTask(FarmTask task) async {
+    final doc = await _db.collection('tasks').add(task.toMap());
+    return doc.id;
+  }
+
+  Future<void> updateTask(FarmTask task) {
+    return _db.collection('tasks').doc(task.id).update(task.toMap());
   }
 
   Future<void> toggleTaskStatus(String taskId, bool currentStatus) {
