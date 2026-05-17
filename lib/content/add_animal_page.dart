@@ -67,7 +67,7 @@ class _AddAnimalPageState extends State<AddAnimalPage> {
         calvingDetails: CalvingHistory(
           date: _birthDate,
           calvingCourse: 'Normal',
-          calfCount: '1',
+          calfCount: '1', id: '',// ID wird in der Datenbank generiert //HIERHIERHIER
         ),
       );
     } else {

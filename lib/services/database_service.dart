@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_maturaprojekt_v01/models/farm_document.dart';
+import 'package:intl/intl.dart';
 import '../models/animal.dart';
 import '../models/calving_history.dart';
 import '../models/milk_yield.dart';
@@ -223,6 +224,7 @@ class DatabaseService {
           (snap) => snap.docs.map((doc) {
             final data = doc.data();
             return MilkYield(
+              id: doc.id, // Jetzt mit ID
               date: (data['date'] as Timestamp).toDate(),
               amountLiters: (data['amountLiters'] as num).toDouble(),
               session: data['session'] ?? '',
@@ -250,9 +252,17 @@ class DatabaseService {
           (snap) => snap.docs.map((doc) {
             final data = doc.data();
             return MedicalRecord(
+              id: doc.id, // ID zum Bearbeiten/Löschen
               date: (data['date'] as Timestamp).toDate(),
               diagnosis: data['diagnosis'] ?? '',
               treatment: data['treatment'] ?? '',
+              // Neue Felder:
+              cost: (data['cost'] ?? 0.0).toDouble(),
+              veterinarian: data['veterinarian'] ?? '',
+              followUpDate: data['followUpDate'] != null
+                  ? (data['followUpDate'] as Timestamp).toDate()
+                  : null,
+              notes: data['notes'] ?? '',
             );
           }).toList(),
         );
@@ -277,9 +287,10 @@ class DatabaseService {
           (snap) => snap.docs.map((doc) {
             final data = doc.data();
             return CalvingHistory(
+              id: doc.id, // ID hinzugefügt
               date: (data['date'] as Timestamp).toDate(),
               calvingCourse: data['calvingCourse'] ?? '',
-              calfCount: data['calfCount'] ?? '1', // String handling safe
+              calfCount: data['calfCount'] ?? '1',
             );
           }).toList(),
         );
@@ -327,5 +338,77 @@ class DatabaseService {
 
   Future<void> deleteTask(String taskId) {
     return _db.collection('tasks').doc(taskId).delete();
+  }
+
+  // Füge dies zu deiner DatabaseService Klasse hinzu
+
+  // 1. Alle Milchdaten aller Tiere abrufen (erfordert einen Index in Firebase!)
+  Stream<List<MilkYield>> getAllMilkYields() {
+    return _db
+        .collectionGroup(
+          'milk_yields',
+        ) // Sucht in allen 'milk_yields' Unterkollektionen
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map(
+          (snap) => snap.docs.map((doc) {
+            final data = doc.data();
+            return MilkYield(
+              date: (data['date'] as Timestamp).toDate(),
+              amountLiters: (data['amountLiters'] as num).toDouble(),
+              session: data['session'] ?? '',
+              id: doc.id, // ID hinzugefügt
+            );
+          }).toList(),
+        );
+  }
+
+  // 2. Die Gesamtmenge für den Hof speichern
+  Future<void> setFarmMilkTotal(DateTime date, double amount) {
+    String dateId = DateFormat('yyyy-MM-dd').format(date);
+    return _db.collection('farm_milk_totals').doc(dateId).set({
+      'date': Timestamp.fromDate(date),
+      'totalAmount': amount,
+      'ownerId': userId, // Wichtig für die Sicherheit
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 3. (Optional) Abruf der manuell eingetragenen Hof-Gesamtmengen
+  // In der Klasse DatabaseService hinzufügen:
+  Stream<List<Map<String, dynamic>>> getFarmMilkTotals() {
+    return _db
+        .collection('farm_milk_totals')
+        .orderBy('date', descending: true)
+        .limit(14) // Wir holen etwas mehr, um sicherzugehen
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => doc.data()).toList());
+  }
+
+  // --- MILCH ---
+  Future<void> updateMilkYield(String animalId, MilkYield record) {
+    return _db.collection('animals').doc(animalId).collection('milk_yields').doc(record.id).update(record.toMap());
+  }
+
+  Future<void> deleteMilkYield(String animalId, String recordId) {
+    return _db.collection('animals').doc(animalId).collection('milk_yields').doc(recordId).delete();
+  }
+
+  // --- GESUNDHEIT (MEDICAL) ---
+  Future<void> updateMedicalRecord(String animalId, MedicalRecord record) {
+    return _db.collection('animals').doc(animalId).collection('medical_records').doc(record.id).update(record.toMap());
+  }
+
+  Future<void> deleteMedicalRecord(String animalId, String recordId) {
+    return _db.collection('animals').doc(animalId).collection('medical_records').doc(recordId).delete();
+  }
+
+  // --- KALBUNG ---
+  Future<void> updateCalvingHistory(String animalId, CalvingHistory record) {
+    return _db.collection('animals').doc(animalId).collection('calving_history').doc(record.id).update(record.toMap());
+  }
+
+  Future<void> deleteCalvingHistory(String animalId, String recordId) {
+    return _db.collection('animals').doc(animalId).collection('calving_history').doc(recordId).delete();
   }
 }

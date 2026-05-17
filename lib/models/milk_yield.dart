@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MilkYield {
+  final String id; // Neu
   final DateTime date;
   final double amountLiters;
   final String session;
   
-  MilkYield({required this.date, required this.amountLiters, required this.session});
+  MilkYield({required this.id, required this.date, required this.amountLiters, required this.session});
 
   Map<String, dynamic> toMap() {
     return {

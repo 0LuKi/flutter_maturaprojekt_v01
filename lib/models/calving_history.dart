@@ -4,8 +4,9 @@ class CalvingHistory {
   final DateTime date;
   final String calvingCourse;
   final String calfCount;
+  final String id;
 
-  CalvingHistory({required this.date, required this.calvingCourse, required this.calfCount});
+  CalvingHistory({required this.date, required this.calvingCourse, required this.calfCount, required this.id});
 
   Map<String, dynamic> toMap() {
     return {

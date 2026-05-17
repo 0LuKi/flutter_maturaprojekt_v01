@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_maturaprojekt_v01/content/archive_page.dart';
+import 'package:flutter_maturaprojekt_v01/models/milk_yield.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_maturaprojekt_v01/l10n/app_localizations.dart';
@@ -33,6 +35,10 @@ class _DashboardPageState extends State<DashboardPage> {
   StreamSubscription<User?>? _authSubscription;
   final AuthService _authService = AuthService();
 
+  // Nach: final AuthService _authService = AuthService();
+  final TextEditingController _totalMilkController = TextEditingController();
+  DateTime _selectedEntryDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +48,8 @@ class _DashboardPageState extends State<DashboardPage> {
       _dbService = DatabaseService(userId: currentUser.uid);
       _userName = currentUser.displayName ?? 'Landwirt';
     }
+
+    
 
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (mounted) {
@@ -191,7 +199,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           ],
                         ),
                         const SizedBox(height: 30),
-                        _buildBarChart(colorScheme),
+                        _buildRealMilkChart(colorScheme), // Das neue dynamische Chart
+                        const SizedBox(height: 10),
+                        _buildTotalMilkInput(colorScheme), // Das neue Eingabefeld
                         const SizedBox(height: 30),
                         _buildStatusGrid(colorScheme),
                         const SizedBox(height: 30),
@@ -214,102 +224,165 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // --- WIDGETS ---
 
-  Widget _buildBarChart(ColorScheme colorScheme) {
-    // WRAP THE CHART IN A SIZED BOX:
-    return SizedBox(
-      height: 300, // You can adjust this height to look good on your UI
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          minY: 200,
-          maxY: 500,
-          gridData: const FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            show: true,
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 35,
-                interval: 50,
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  const style = TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  );
-                  String text;
-                  switch (value.toInt()) {
-                    case 0:
-                      text = 'Mo';
-                      break;
-                    case 1:
-                      text = 'Di';
-                      break;
-                    case 2:
-                      text = 'Mi';
-                      break;
-                    case 3:
-                      text = 'Do';
-                      break;
-                    case 4:
-                      text = 'Fr';
-                      break;
-                    case 5:
-                      text = 'Sa';
-                      break;
-                    case 6:
-                      text = 'So';
-                      break;
-                    default:
-                      text = '';
+  Widget _buildRealMilkChart(ColorScheme colorScheme) {
+    // 1. Wir rufen beide Streams verschachtelt auf
+    return StreamBuilder<List<MilkYield>>(
+      stream: _dbService?.getAllMilkYields(), // Einzelne Kühe
+      builder: (context, cowSnapshot) {
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _dbService?.getFarmMilkTotals(), // Hof-Gesamt (Tank)
+          builder: (context, farmSnapshot) {
+            
+            if (cowSnapshot.connectionState == ConnectionState.waiting ||
+                farmSnapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(height: 380, child: Center(child: CircularProgressIndicator()));
+            }
+
+            List<double> sums = List.filled(7, 0.0);
+            List<bool> hasIndividualData = List.filled(7, false); // Merkt sich, wo Einzeldaten sind
+
+            // WICHTIG: Um alte Daten herauszufiltern, nehmen wir nur die letzten 7 Tage
+            DateTime startOfToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+
+            // 2. Zuerst die Kuh-Daten auswerten (Priorität 1)
+            if (cowSnapshot.hasData) {
+              for (var record in cowSnapshot.data!) {
+                DateTime recordDate = DateTime(record.date.year, record.date.month, record.date.day);
+                int diff = startOfToday.difference(recordDate).inDays;
+                
+                if (diff >= 0 && diff < 7) { // Nur aktuelle Woche
+                  int dayIndex = record.date.weekday - 1; // 0=Mo, 6=So
+                  sums[dayIndex] += record.amountLiters;
+                  hasIndividualData[dayIndex] = true; // Markieren, dass hier Kuh-Daten sind
+                }
+              }
+            }
+
+            // 3. Dann die Tank-Daten auswerten (Priorität 2)
+            if (farmSnapshot.hasData) {
+              for (var data in farmSnapshot.data!) {
+                DateTime date = (data['date'] as Timestamp).toDate();
+                DateTime recordDate = DateTime(date.year, date.month, date.day);
+                int diff = startOfToday.difference(recordDate).inDays;
+
+                if (diff >= 0 && diff < 7) {
+                  int dayIndex = date.weekday - 1;
+                  
+                  // NUR einfügen, wenn an diesem Tag KEINE Kuh-Einzeldaten existieren
+                  if (!hasIndividualData[dayIndex]) {
+                    sums[dayIndex] = (data['totalAmount'] as num).toDouble();
                   }
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    space: 4.0,
-                    child: Text(text, style: style),
-                  );
-                },
+                }
+              }
+            }
+
+            // 4. Achsen-Maximum berechnen
+            double maxVal = sums.reduce((a, b) => a > b ? a : b);
+            double axisMax = ((maxVal + 40) / 20).ceil() * 20.0;
+            if (axisMax < 100) axisMax = 100;
+
+            return Container(
+              height: 380,
+              padding: const EdgeInsets.fromLTRB(10, 10, 20, 10),
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: axisMax,
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (group) => Colors.white,
+                      tooltipRoundedRadius: 12,
+                      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      tooltipMargin: 8,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        // Zeigt im Tooltip an, aus welcher Quelle die Daten stammen
+                        bool isHerd = hasIndividualData[group.x.toInt()];
+                        String prefix = isHerd ? "Herde:" : "Tank:";
+                        
+                        return BarTooltipItem(
+                          '$prefix\n${rod.toY.toInt()} L',
+                          const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
+                        );
+                      },
+                    ),
+                  ),
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 45,
+                        getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 50,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+                          if (value >= 0 && value < 7) {
+                            return SideTitleWidget(
+                              axisSide: meta.axisSide,
+                              space: 15,
+                              child: Text(days[value.toInt()], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  barGroups: List.generate(
+                    7,
+                    (index) {
+                      // Tank-Einträge bekommen eine leicht abweichende Farbe (Teal), Herde die primäre Farbe
+                      Color barColor = hasIndividualData[index] ? colorScheme.primary : Colors.blueAccent;
+                      return BarChartGroupData(
+                        x: index,
+                        barRods: [
+                          BarChartRodData(
+                            toY: sums[index],
+                            color: barColor,
+                            width: 18,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                            backDrawRodData: BackgroundBarChartRodData(
+                              show: true,
+                              toY: axisMax,
+                              color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-          ),
-          barGroups: [
-            _makeGroupData(0, 445, colorScheme),
-            _makeGroupData(1, 453, colorScheme),
-            _makeGroupData(2, 438, colorScheme),
-            _makeGroupData(3, 443, colorScheme),
-            _makeGroupData(4, 460, colorScheme),
-            _makeGroupData(5, 455, colorScheme),
-            _makeGroupData(6, 448, colorScheme),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
-  BarChartGroupData _makeGroupData(int x, double y, ColorScheme colors) {
+  BarChartGroupData _makeGroupData(int x, double y, ColorScheme colors, double max) {
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
           color: colors.primary,
-          width: 16,
+          width: 18,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: 500,
-            color: colors.surface.withOpacity(0.5),
+            toY: max, // Benutzt jetzt den dynamischen Max-Wert
+            color: colors.surfaceContainerHighest.withOpacity(0.4),
           ),
         ),
       ],
@@ -507,7 +580,83 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  Widget _buildTotalMilkInput(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Hof-Gesamtmenge erfassen",
+            style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _totalMilkController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: "Liter (Tank)",
+                    prefixIcon: const Icon(Icons.water_drop_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedEntryDate,
+                    firstDate: DateTime(2024),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _selectedEntryDate = picked);
+                },
+                icon: const Icon(Icons.calendar_today),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {
+                double? amount = double.tryParse(_totalMilkController.text);
+                if (amount != null && _dbService != null) {
+                  _dbService!.setFarmMilkTotal(_selectedEntryDate, amount);
+                  _totalMilkController.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Menge erfolgreich gespeichert!")),
+                  );
+                }
+              },
+              icon: const Icon(Icons.add_task),
+              label: const Text("Speichern"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
+
+
 
 class _DashboardCard extends StatelessWidget {
   final String title;
@@ -590,4 +739,6 @@ class _DashboardCard extends StatelessWidget {
       ),
     );
   }
+
+  
 }
